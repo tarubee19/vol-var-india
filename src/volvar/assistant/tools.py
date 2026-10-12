@@ -132,6 +132,10 @@ TOOL_SPECS: list[dict[str, Any]] = [
 DATA_TOOLS = frozenset(spec["name"] for spec in TOOL_SPECS if spec["name"] != "search_knowledge_base")
 
 
+class LookupFailure(ValueError):
+    """The request was well-formed but names something that does not exist in the results."""
+
+
 @dataclass
 class ToolCallRecord:
     name: str
@@ -158,9 +162,15 @@ class ToolExecutor:
             try:
                 result = handler(**arguments)
             except TypeError as exc:
-                result = {"ok": False, "error": f"Bad arguments for {name}: {exc}"}
+                result = {
+                    "ok": False,
+                    "error_type": "invalid",
+                    "error": f"Bad arguments for {name}: {exc}",
+                }
+            except LookupFailure as exc:
+                result = {"ok": False, "error_type": "not_found", "error": str(exc)}
             except ValueError as exc:
-                result = {"ok": False, "error": str(exc)}
+                result = {"ok": False, "error_type": "invalid", "error": str(exc)}
         self.calls.append(ToolCallRecord(name, arguments, bool(result.get("ok"))))
         self.evidence.append(result)
         return result
@@ -169,7 +179,7 @@ class ToolExecutor:
     def _ticker(self, ticker: str) -> str:
         resolved = self.store.resolve_ticker(str(ticker))
         if resolved is None:
-            raise ValueError(
+            raise LookupFailure(
                 f"Unknown ticker '{ticker}'. Available: {', '.join(self.store.tickers)}."
             )
         return resolved
@@ -227,7 +237,7 @@ class ToolExecutor:
         df = self.store.next_day
         row = df[(df.ticker == ticker) & (df.model == model)]
         if row.empty:
-            raise ValueError(f"No forecast for {ticker} with model {model}.")
+            raise LookupFailure(f"No forecast for {ticker} with model {model}.")
         r = row.iloc[0]
         return self._base(
             ticker=ticker,
@@ -257,7 +267,7 @@ class ToolExecutor:
         )
         row = df[mask]
         if row.empty:
-            raise ValueError(f"No VaR for {ticker}/{model}/{method}/{level}.")
+            raise LookupFailure(f"No VaR for {ticker}/{model}/{method}/{level}.")
         r = row.iloc[0]
         vol = self.store.next_day
         v = vol[(vol.ticker == ticker) & (vol.model == model)]
@@ -322,7 +332,7 @@ class ToolExecutor:
         )
         row = df[mask]
         if row.empty:
-            raise ValueError(f"No backtest for {ticker}/{model}/{method}/{level}.")
+            raise LookupFailure(f"No backtest for {ticker}/{model}/{method}/{level}.")
         r = row.iloc[0]
         zone = str(r["basel_zone"])
         return self._base(
@@ -359,7 +369,7 @@ class ToolExecutor:
         )
         row = df[mask]
         if row.empty:
-            raise ValueError(f"No summary for {model}/{method}/{level}.")
+            raise LookupFailure(f"No summary for {model}/{method}/{level}.")
         r = row.iloc[0]
         green = r.get("share_latest_green")
         return self._base(
