@@ -57,8 +57,8 @@ def garch_variance(
     if kind not in ("garch", "gjr"):
         raise ValueError("kind must be 'garch' or 'gjr'")
     n = len(ret)
-    if n <= min_train + 1:
-        raise ValueError(f"need more than min_train+1={min_train + 1} observations, got {n}")
+    if n <= min_train:
+        raise ValueError(f"need more than min_train={min_train} observations, got {n}")
 
     out = np.full(n, np.nan)
     refits: list[dict] = []

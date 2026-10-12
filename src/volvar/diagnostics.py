@@ -18,7 +18,9 @@ from statsmodels.tsa.stattools import adfuller, kpss
 
 def adf_pvalue(x: pd.Series) -> float:
     """Augmented Dickey-Fuller p-value (H0: unit root)."""
-    return float(adfuller(x.dropna(), autolag="AIC")[1])
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", FutureWarning)  # statsmodels return-type deprecation
+        return float(adfuller(x.dropna(), autolag="AIC")[1])
 
 
 def kpss_pvalue(x: pd.Series) -> float:
@@ -31,7 +33,9 @@ def kpss_pvalue(x: pd.Series) -> float:
 def arch_lm_pvalue(x: pd.Series, lags: int = 5) -> float:
     """Engle's ARCH-LM test p-value (H0: no ARCH effects)."""
     centered = x.dropna() - x.dropna().mean()
-    return float(het_arch(centered, nlags=lags)[1])
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", FutureWarning)
+        return float(het_arch(centered, nlags=lags)[1])
 
 
 def ljung_box_pvalue(x: pd.Series, lags: int = 10) -> float:

@@ -100,7 +100,7 @@ def lgbm_variance(
     frame = build_ml_frame(panels, lam)
     usable = frame.dropna(subset=FEATURE_COLUMNS + ["base", "y"]).sort_values("date")
     calendar = np.sort(frame["date"].unique())
-    if len(calendar) <= min_train + 1:
+    if len(calendar) <= min_train:
         raise ValueError("not enough history for the requested min_train")
 
     model_params = dict(params or {})

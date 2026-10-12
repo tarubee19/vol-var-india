@@ -43,8 +43,8 @@ def har_variance(
             floored at 10% of it so the variance stays strictly positive.
     """
     n = len(panel)
-    if n <= min_train + 1:
-        raise ValueError(f"need more than min_train+1={min_train + 1} observations, got {n}")
+    if n <= min_train:
+        raise ValueError(f"need more than min_train={min_train} observations, got {n}")
 
     x_all = har_features(panel).shift(1)  # features for target day t come from day t-1
     y_all = panel["r2"]

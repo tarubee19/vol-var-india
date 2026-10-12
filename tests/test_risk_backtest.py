@@ -12,6 +12,7 @@ from volvar.backtest import (
     kupiec_pof,
     violations,
     worst_rolling_exceptions,
+    zone_shares,
 )
 from volvar.risk import fhs_var_es, normal_var_es, var_es
 
@@ -117,3 +118,14 @@ def test_violations_and_es_ratio_alignment():
     es = pd.Series([3.0, 3.0, 3.0, 3.0, 3.0], index=idx)
     assert violations(ret, var).tolist() == [1, 0, 0, 1, 0]
     assert es_ratio(ret, var, es) == pytest.approx(((3.0 + 4.0) / 2) / 3.0)
+
+
+def test_zone_shares_for_calibrated_and_bad_models():
+    rng = np.random.default_rng(8)
+    calibrated = (rng.random(4000) < 0.01).astype(int)
+    z = zone_shares(calibrated)
+    assert z["green"] > 0.8 and z["red"] < 0.05
+    assert sum(z.values()) == pytest.approx(1.0)
+    bad = (rng.random(4000) < 0.08).astype(int)  # ~20 breaches per 250 days
+    assert zone_shares(bad)["red"] > 0.9
+    assert np.isnan(zone_shares(np.zeros(100, dtype=int))["green"])

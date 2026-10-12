@@ -85,6 +85,21 @@ def worst_rolling_exceptions(v: np.ndarray, window: int = 250) -> int:
     return int((csum[window:] - csum[:-window]).max())
 
 
+def zone_shares(v: np.ndarray, window: int = 250) -> dict[str, float]:
+    """Share of rolling ``window``-day spans falling in each Basel zone (99% VaR convention).
+
+    For a well-calibrated 99% model the expected shares are roughly 89% green, 11% yellow
+    and under 1% red, so this is a fairer summary than the single worst window.
+    """
+    v = np.asarray(v, dtype=int)
+    if len(v) < window:
+        return {"green": float("nan"), "yellow": float("nan"), "red": float("nan")}
+    csum = np.concatenate([[0], np.cumsum(v)])
+    counts = csum[window:] - csum[:-window]
+    zones = np.array([basel_zone(int(c)) for c in counts])
+    return {z: float((zones == z).mean()) for z in ("green", "yellow", "red")}
+
+
 def es_ratio(ret: pd.Series, var: pd.Series, es: pd.Series) -> float:
     """Mean realised loss on violation days divided by mean predicted ES on those days.
 
@@ -106,6 +121,9 @@ def backtest_var(ret: pd.Series, var: pd.Series, es: pd.Series, level: float) ->
     lr_ind, p_ind = christoffersen_independence(v)
     lr_cc, p_cc = christoffersen_cc(v, p)
     worst = worst_rolling_exceptions(v)
+    is99 = abs(level - 0.99) < 1e-9
+    latest = int(v[-250:].sum()) if len(v) else 0
+    shares = zone_shares(v) if is99 else {"green": float("nan"), "yellow": float("nan"), "red": float("nan")}
     # pass/fail: use conditional coverage when it is defined, otherwise unconditional coverage
     p_decision = p_cc if not np.isnan(p_cc) else p_uc
     return {
@@ -119,7 +137,10 @@ def backtest_var(ret: pd.Series, var: pd.Series, es: pd.Series, level: float) ->
         "es_ratio": es_ratio(ret, var, es),
         "mean_var_pct": float(var.mean()),
         "worst_250d_exceptions": worst,
-        "basel_zone": basel_zone(worst) if abs(level - 0.99) < 1e-9 else "n/a",
+        "latest_250d_exceptions": latest,
+        "basel_zone": basel_zone(latest) if is99 else "n/a",  # zone of the most recent 250 days
+        "pct_windows_green": shares["green"],
+        "pct_windows_red": shares["red"],
         "passes": bool(p_decision > 0.05),
         "lr_uc": lr_uc,
         "lr_ind": lr_ind,
