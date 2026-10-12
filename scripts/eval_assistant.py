@@ -125,6 +125,7 @@ def main() -> None:
             out = [q for q in oos if q["split"] == split]
             row[f"{split}_false_abstain"] = sum(kb.search(q["question"]).abstained for q in ins) / len(ins)
             row[f"{split}_oos_abstain"] = sum(kb.search(q["question"]).abstained for q in out) / len(out)
+            row[f"{split}_n_in_scope"], row[f"{split}_n_oos"] = len(ins), len(out)
         sweep.append(row)
     kb.min_coverage = report["min_coverage"]
     report["abstention_sweep"] = sweep
@@ -154,6 +155,8 @@ def main() -> None:
         adv = [q for q in part if q["type"] == "advice"]
         out = [q for q in part if q["type"] == "oos"]
         e2e[split] = {
+            "n_advice": len(adv),
+            "n_oos": len(out),
             "advice_refused": sum(replies[q["id"]].answer == ADVICE_TEXT for q in adv) / len(adv),
             "oos_abstained": sum(replies[q["id"]].answer == ABSTAIN_TEXT for q in out) / len(out),
             "grounded_rate": sum(replies[q["id"]].grounded for q in part) / len(part),
