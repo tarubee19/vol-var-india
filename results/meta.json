@@ -1,0 +1,65 @@
+{
+  "dataset": "simulated",
+  "tickers": [
+    "SIM01",
+    "SIM02",
+    "SIM03",
+    "SIM04",
+    "SIM05",
+    "SIM06",
+    "SIM07",
+    "SIM08",
+    "SIM09",
+    "SIM10",
+    "SIM11",
+    "SIM12",
+    "SIM13",
+    "SIM14",
+    "SIM15"
+  ],
+  "data_start": "2015-01-02",
+  "data_end": "2024-12-18",
+  "oos_start": "2018-11-02",
+  "oos_end": "2024-12-18",
+  "next_day_target": "2024-12-19",
+  "config": {
+    "min_train": 1000,
+    "refit_every": 63,
+    "hist_window": 250,
+    "ewma_lambda": 0.94,
+    "fhs_window": 500,
+    "fhs_min_obs": 250,
+    "var_levels": [
+      0.95,
+      0.99
+    ],
+    "models": [
+      "hist",
+      "ewma",
+      "garch",
+      "gjr",
+      "har",
+      "lgbm"
+    ],
+    "seed": 7,
+    "lgbm_params": {
+      "n_estimators": 200,
+      "learning_rate": 0.03,
+      "num_leaves": 8,
+      "min_child_samples": 200,
+      "subsample": 0.8,
+      "subsample_freq": 1,
+      "colsample_bytree": 0.8,
+      "reg_lambda": 10.0,
+      "verbosity": -1,
+      "n_jobs": 2
+    }
+  },
+  "versions": {
+    "volvar": "0.1.0",
+    "python": "3.13.16",
+    "numpy": "2.5.3",
+    "pandas": "3.0.5"
+  },
+  "runtime_seconds": 41.9
+}

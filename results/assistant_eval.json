@@ -1,0 +1,217 @@
+{
+  "dataset": "simulated",
+  "n_questions": 70,
+  "min_coverage": 0.6,
+  "retrieval_dev": {
+    "bm25": {
+      "n": 18,
+      "hit@1": 0.8333333333333334,
+      "hit@3": 1.0,
+      "mrr": 0.9074074074074073
+    },
+    "tfidf": {
+      "n": 18,
+      "hit@1": 0.8333333333333334,
+      "hit@3": 1.0,
+      "mrr": 0.8981481481481483
+    }
+  },
+  "retrieval_test": {
+    "bm25": {
+      "n": 18,
+      "hit@1": 0.9444444444444444,
+      "hit@3": 1.0,
+      "mrr": 0.9629629629629629
+    },
+    "tfidf": {
+      "n": 18,
+      "hit@1": 0.9444444444444444,
+      "hit@3": 1.0,
+      "mrr": 0.9629629629629629
+    }
+  },
+  "retrieval_all": {
+    "bm25": {
+      "n": 36,
+      "hit@1": 0.8888888888888888,
+      "hit@3": 1.0,
+      "mrr": 0.9351851851851851
+    },
+    "tfidf": {
+      "n": 36,
+      "hit@1": 0.8888888888888888,
+      "hit@3": 1.0,
+      "mrr": 0.9305555555555556
+    }
+  },
+  "abstention_sweep": [
+    {
+      "min_coverage": 0.0,
+      "dev_false_abstain": 0.0,
+      "dev_oos_abstain": 0.3333333333333333,
+      "dev_n_in_scope": 16,
+      "dev_n_oos": 3,
+      "test_false_abstain": 0.0,
+      "test_oos_abstain": 0.0,
+      "test_n_in_scope": 16,
+      "test_n_oos": 2
+    },
+    {
+      "min_coverage": 0.25,
+      "dev_false_abstain": 0.0,
+      "dev_oos_abstain": 0.6666666666666666,
+      "dev_n_in_scope": 16,
+      "dev_n_oos": 3,
+      "test_false_abstain": 0.0,
+      "test_oos_abstain": 0.5,
+      "test_n_in_scope": 16,
+      "test_n_oos": 2
+    },
+    {
+      "min_coverage": 0.34,
+      "dev_false_abstain": 0.0,
+      "dev_oos_abstain": 0.6666666666666666,
+      "dev_n_in_scope": 16,
+      "dev_n_oos": 3,
+      "test_false_abstain": 0.0,
+      "test_oos_abstain": 0.5,
+      "test_n_in_scope": 16,
+      "test_n_oos": 2
+    },
+    {
+      "min_coverage": 0.5,
+      "dev_false_abstain": 0.0,
+      "dev_oos_abstain": 0.6666666666666666,
+      "dev_n_in_scope": 16,
+      "dev_n_oos": 3,
+      "test_false_abstain": 0.0,
+      "test_oos_abstain": 0.5,
+      "test_n_in_scope": 16,
+      "test_n_oos": 2
+    },
+    {
+      "min_coverage": 0.6,
+      "dev_false_abstain": 0.0,
+      "dev_oos_abstain": 1.0,
+      "dev_n_in_scope": 16,
+      "dev_n_oos": 3,
+      "test_false_abstain": 0.125,
+      "test_oos_abstain": 1.0,
+      "test_n_in_scope": 16,
+      "test_n_oos": 2
+    },
+    {
+      "min_coverage": 0.75,
+      "dev_false_abstain": 0.1875,
+      "dev_oos_abstain": 1.0,
+      "dev_n_in_scope": 16,
+      "dev_n_oos": 3,
+      "test_false_abstain": 0.1875,
+      "test_oos_abstain": 1.0,
+      "test_n_in_scope": 16,
+      "test_n_oos": 2
+    },
+    {
+      "min_coverage": 1.0,
+      "dev_false_abstain": 0.5,
+      "dev_oos_abstain": 1.0,
+      "dev_n_in_scope": 16,
+      "dev_n_oos": 3,
+      "test_false_abstain": 0.375,
+      "test_oos_abstain": 1.0,
+      "test_n_in_scope": 16,
+      "test_n_oos": 2
+    }
+  ],
+  "tool_selection": {
+    "dev": {
+      "n": 30,
+      "tool_set_accuracy": 1.0,
+      "tool_args_accuracy": 1.0
+    },
+    "test": {
+      "n": 29,
+      "tool_set_accuracy": 1.0,
+      "tool_args_accuracy": 1.0
+    },
+    "stress": {
+      "n": 11,
+      "tool_set_accuracy": 0.5454545454545454,
+      "tool_args_accuracy": 0.5454545454545454
+    }
+  },
+  "end_to_end": {
+    "dev": {
+      "n_advice": 2,
+      "n_oos": 3,
+      "advice_refused": 1.0,
+      "oos_abstained": 1.0,
+      "grounded_rate": 1.0
+    },
+    "test": {
+      "n_advice": 2,
+      "n_oos": 2,
+      "advice_refused": 1.0,
+      "oos_abstained": 1.0,
+      "grounded_rate": 1.0
+    }
+  },
+  "failures": [
+    {
+      "id": "kb08",
+      "split": "test",
+      "question": "What value of lambda does RiskMetrics use?",
+      "issues": [
+        "false abstention"
+      ]
+    },
+    {
+      "id": "kb30",
+      "split": "test",
+      "question": "Is there survivorship bias in the stock universe?",
+      "issues": [
+        "false abstention"
+      ]
+    },
+    {
+      "id": "str02",
+      "split": "stress",
+      "question": "What loss should I expect SIM02 to exceed only one day in a hundred?",
+      "issues": [
+        "tools=[('get_backtest', {'ticker': 'SIM02'})]"
+      ]
+    },
+    {
+      "id": "str03",
+      "split": "stress",
+      "question": "Has the GARCH model's 95% estimate for SIM01 been reliable historically?",
+      "issues": [
+        "tools=[]"
+      ]
+    },
+    {
+      "id": "str04",
+      "split": "stress",
+      "question": "Which of the six models forecasts best?",
+      "issues": [
+        "tools=[]"
+      ]
+    },
+    {
+      "id": "str05",
+      "split": "stress",
+      "question": "Is the HAR forecast statistically better than the benchmark?",
+      "issues": [
+        "tools=[]"
+      ]
+    },
+    {
+      "id": "str06",
+      "split": "stress",
+      "question": "Tell me tomorrow's worst-case loss for SIM03 at 99 percent",
+      "issues": [
+        "tools=[('compare_models', {})]"
+      ]
+    }
+  ]
+}
