@@ -1,0 +1,129 @@
+"""Simulated equity data used for development, tests and CI.
+
+The simulator is a market factor plus idiosyncratic components, each following a
+GJR-GARCH(1,1) process with Student-t innovations. OHLC bars are built from the
+simulated daily return plus a random intraday excursion. Tickers are named
+``SIM01``... so simulated data can never be mistaken for real market data.
+
+Because the true data-generating process is known, the output is useful for two
+things: (1) end-to-end tests of the pipeline, and (2) a *sanity check* that the
+GARCH-family models recover the structure they are built for. It says nothing
+about real market performance.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+import numpy as np
+import pandas as pd
+
+
+@dataclass(frozen=True)
+class SimParams:
+    omega: float
+    alpha: float
+    gamma: float
+    beta: float
+    nu: float = 6.0
+
+    @property
+    def persistence(self) -> float:
+        return self.alpha + 0.5 * self.gamma + self.beta
+
+
+def _t_innovations(rng: np.random.Generator, n: int, nu: float) -> np.ndarray:
+    """Student-t draws scaled to unit variance."""
+    return rng.standard_t(nu, size=n) * np.sqrt((nu - 2.0) / nu)
+
+
+def simulate_gjr(n: int, p: SimParams, rng: np.random.Generator) -> tuple[np.ndarray, np.ndarray]:
+    """Simulate returns (percent) and conditional std dev from a GJR-GARCH(1,1,1)."""
+    z = _t_innovations(rng, n, p.nu)
+    h = np.empty(n)
+    r = np.empty(n)
+    h[0] = p.omega / (1.0 - p.persistence)
+    for t in range(n):
+        if t > 0:
+            neg = 1.0 if r[t - 1] < 0 else 0.0
+            h[t] = p.omega + (p.alpha + p.gamma * neg) * r[t - 1] ** 2 + p.beta * h[t - 1]
+        r[t] = np.sqrt(h[t]) * z[t]
+    return r, np.sqrt(h)
+
+
+def simulate_universe(
+    n_days: int = 2600,
+    n_tickers: int = 15,
+    seed: int = 11,
+    start: str = "2015-01-01",
+) -> dict[str, pd.DataFrame]:
+    """Return ``{ticker: OHLCV DataFrame}`` for ``n_tickers`` simulated stocks."""
+    rng = np.random.default_rng(seed)
+    dates = pd.bdate_range(start=start, periods=n_days)
+
+    # Market factor with a persistent, leverage-affected variance process.
+    market_p = SimParams(omega=0.02, alpha=0.04, gamma=0.08, beta=0.90, nu=6.0)
+    market, _ = simulate_gjr(n_days, market_p, rng)
+
+    out: dict[str, pd.DataFrame] = {}
+    for i in range(n_tickers):
+        beta_mkt = rng.uniform(0.6, 1.3)
+        persistence = rng.uniform(0.95, 0.985)
+        alpha = rng.uniform(0.03, 0.07)
+        gamma = rng.uniform(0.04, 0.10)
+        beta = persistence - alpha - 0.5 * gamma
+        target_var = rng.uniform(0.6, 1.6)  # unconditional idiosyncratic variance (%^2)
+        omega = target_var * (1.0 - persistence)
+        idio_p = SimParams(omega=omega, alpha=alpha, gamma=gamma, beta=beta, nu=7.0)
+        idio, idio_sigma = simulate_gjr(n_days, idio_p, rng)
+
+        ret = beta_mkt * market + idio  # percent log returns
+        # approximate total daily std dev (used only to scale gaps and intraday ranges)
+        sigma = np.sqrt(idio_sigma**2 + (beta_mkt**2) * _rolling_var(market))
+
+        close = 100.0 * np.exp(np.cumsum(ret) / 100.0)
+        prev_close = np.concatenate([[100.0], close[:-1]])
+
+        gap = np.sqrt(0.2) * sigma * rng.standard_normal(n_days) / 100.0
+        open_ = prev_close * np.exp(gap)
+        excursion_hi = np.abs(rng.standard_normal(n_days)) * 0.5 * sigma / 100.0
+        excursion_lo = np.abs(rng.standard_normal(n_days)) * 0.5 * sigma / 100.0
+        high = np.maximum(open_, close) * np.exp(excursion_hi)
+        low = np.minimum(open_, close) * np.exp(-excursion_lo)
+
+        base_volume = rng.uniform(5e5, 5e6)
+        vol_noise = rng.standard_normal(n_days) * 0.25
+        volume = base_volume * np.exp(0.4 * np.abs(ret) / max(float(np.std(ret)), 1e-9) + vol_noise)
+
+        out[f"SIM{i + 1:02d}"] = pd.DataFrame(
+            {"open": open_, "high": high, "low": low, "close": close, "volume": volume.round()},
+            index=pd.DatetimeIndex(dates, name="date"),
+        )
+    return out
+
+
+def _rolling_var(x: np.ndarray, window: int = 60) -> np.ndarray:
+    """Trailing variance of the market factor (used only to shape intraday range)."""
+    s = pd.Series(x)
+    v = s.pow(2).rolling(window, min_periods=5).mean().bfill()
+    return v.to_numpy()
+
+
+def write_universe(universe: dict[str, pd.DataFrame], out_dir) -> list[str]:
+    """Write each frame as ``<out_dir>/<TICKER>.csv`` in the same format as real data."""
+    from pathlib import Path
+
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    names = []
+    for name, df in universe.items():
+        d = df.copy()
+        d.columns = [c.title() for c in d.columns]
+        d.index.name = "Date"
+        d.to_csv(out_dir / f"{name}.csv")
+        names.append(name)
+    (out_dir / "README.txt").write_text(
+        "SIMULATED DATA. Generated by volvar.synthetic (GJR-GARCH with Student-t innovations).\n"
+        "Not real market data; for development, tests and CI only.\n"
+    )
+    return names
