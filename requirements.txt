@@ -12,7 +12,7 @@ fastapi>=0.110
 uvicorn>=0.29
 httpx>=0.27
 rank-bm25>=0.2.2
-streamlit>=1.35
+streamlit>=1.50
 plotly>=5.20
 # optional: live LLM backend and real-data download
 anthropic>=0.40

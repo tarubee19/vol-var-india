@@ -26,7 +26,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dashboard = ["streamlit>=1.35", "plotly>=5.20"]
+dashboard = ["streamlit>=1.50", "plotly>=5.20"]
 llm = ["anthropic>=0.40"]
 data = ["yfinance>=0.2.40"]
 dev = ["pytest>=8", "ruff>=0.5"]

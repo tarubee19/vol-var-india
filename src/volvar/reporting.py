@@ -29,6 +29,10 @@ CRITICAL = "#d03b3b"
 MODEL_COLORS = dict(
     zip(MODEL_ORDER, ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300"], strict=True)
 )
+# Same six hues stepped for a dark surface (validated: lightness band, CVD separation, >=3:1).
+MODEL_COLORS_DARK = dict(
+    zip(MODEL_ORDER, ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300"], strict=True)
+)
 
 
 def _style() -> None:
