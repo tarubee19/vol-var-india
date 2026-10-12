@@ -48,3 +48,14 @@ def test_dashboard_explains_missing_results(tmp_path, monkeypatch):
     at = run_app(tmp_path, monkeypatch)
     assert not at.exception
     assert any("run_pipeline" in e.value for e in at.error)
+
+
+def test_dashboard_works_without_daily_series(pipeline_run, tmp_path, monkeypatch):
+    import shutil
+
+    slim = tmp_path / "slim"
+    shutil.copytree(pipeline_run[1], slim, ignore=shutil.ignore_patterns("*.parquet", "figures"))
+    at = run_app(slim, monkeypatch)
+    assert not at.exception
+    assert any("Daily series" in i.value for i in at.info)
+    assert any(m.label == "Violations" for m in at.metric)  # summary metrics still render

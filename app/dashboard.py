@@ -52,9 +52,13 @@ def load_store(results_dir: str) -> ResultsStore:
 
 
 @st.cache_data(show_spinner=False)
-def load_series(results_dir: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+def load_series(results_dir: str) -> tuple[pd.DataFrame, pd.DataFrame] | None:
+    """Daily forecast/return series; absent when only the small summary files were kept."""
     d = Path(results_dir)
-    return pd.read_parquet(d / "forecasts.parquet"), pd.read_parquet(d / "returns.parquet")
+    try:
+        return pd.read_parquet(d / "forecasts.parquet"), pd.read_parquet(d / "returns.parquet")
+    except FileNotFoundError:
+        return None
 
 
 @st.cache_resource(show_spinner=False)
@@ -95,8 +99,13 @@ except ResultsNotFoundError as exc:
     st.error(str(exc))
     st.stop()
 
-forecasts, returns = load_series(results_dir)
+series = load_series(results_dir)
+forecasts, returns = series if series is not None else (None, None)
 cfg = store.meta["config"]
+NO_SERIES = (
+    "Daily series (forecasts.parquet, returns.parquet) are not in this results folder. "
+    "Re-run `python scripts/run_pipeline.py` to enable this chart."
+)
 
 st.title("Volatility forecasting & Value-at-Risk")
 if store.is_simulated:
@@ -199,27 +208,31 @@ with tab_fc:
     c3.metric(f"{level:.0%} VaR", f"{ndv['var_pct']:.2f}%", help="One-day loss exceeded on ~1 - level of days.")
     c4.metric(f"{level:.0%} Expected Shortfall", f"{ndv['es_pct']:.2f}%")
 
-    window = st.select_slider("History shown (trading days)", [125, 250, 500, 1000], value=500)
-    f = forecasts[(forecasts.ticker == ticker) & (forecasts.model == model)].set_index("date")["var"]
-    r = returns[returns.ticker == ticker].set_index("date")["ret"]
-    hist = pd.DataFrame({"forecast_vol": f**0.5, "abs_return": r.abs()}).dropna().tail(window)
-    st.markdown("**Forecast volatility vs realised absolute return** (percent per day)")
-    fig = go.Figure()
-    fig.add_trace(
-        go.Scattergl(
-            x=hist.index, y=hist.abs_return, mode="markers", name="|daily return|",
-            marker=dict(size=4, color=MUTED, opacity=0.7),
+    if series is None:
+        st.info(NO_SERIES)
+    else:
+        window = st.select_slider("History shown (trading days)", [125, 250, 500, 1000], value=500)
+        f = forecasts[(forecasts.ticker == ticker) & (forecasts.model == model)].set_index("date")["var"]
+        r = returns[returns.ticker == ticker].set_index("date")["ret"]
+        hist = pd.DataFrame({"forecast_vol": f**0.5, "abs_return": r.abs()}).dropna().tail(window)
+        st.markdown("**Forecast volatility vs realised absolute return** (percent per day)")
+        fig = go.Figure()
+        fig.add_trace(
+            go.Scattergl(
+                x=hist.index, y=hist.abs_return, mode="markers", name="|daily return|",
+                marker=dict(size=4, color=MUTED, opacity=0.7),
+            )
         )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=hist.index, y=hist.forecast_vol, mode="lines", name=f"{MODEL_LABELS[model]} forecast",
-            line=dict(color=COLORS[model], width=2),
+        fig.add_trace(
+            go.Scatter(
+                x=hist.index, y=hist.forecast_vol, mode="lines", name=f"{MODEL_LABELS[model]} forecast",
+                line=dict(color=COLORS[model], width=2),
+            )
         )
-    )
-    st.plotly_chart(fig_layout(fig), width="stretch")
-    with st.expander("Table view"):
-        st.dataframe(hist.round(4).reset_index().tail(60), hide_index=True, width="stretch")
+        st.plotly_chart(fig_layout(fig), width="stretch")
+        with st.expander("Table view"):
+            st.dataframe(hist.round(4).reset_index().tail(60), hide_index=True, width="stretch")
+
 
     st.markdown("**All models, next day**")
     allm = store.next_day[store.next_day.ticker == ticker].copy()
@@ -255,40 +268,44 @@ with tab_bt:
             color=zone if zone != "yellow" else "orange",
         )
 
-    vf = var_frame(returns, forecasts, cfg, ticker, model, level, method)
-    options = sorted({250, 500, 1000, len(vf)})
-    window = st.select_slider(
-        "History shown (trading days)", options, value=min(500, options[-1]), key="bt_window"
-    )
-    vf = vf.tail(window)
-    viol = vf[vf.violation]
-    st.markdown("**Daily return against the VaR threshold** (percent)")
-    fig = go.Figure()
-    fig.add_trace(
-        go.Scattergl(
-            x=vf.index, y=vf.ret, mode="markers", name="Daily return",
-            marker=dict(size=4, color=MUTED, opacity=0.7),
+    if series is None:
+        st.info(NO_SERIES)
+    else:
+        vf = var_frame(returns, forecasts, cfg, ticker, model, level, method)
+        options = sorted({250, 500, 1000, len(vf)})
+        window = st.select_slider(
+            "History shown (trading days)", options, value=min(500, options[-1]), key="bt_window"
         )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=vf.index, y=-vf["var"], mode="lines", name=f"-{level:.0%} VaR",
-            line=dict(color=COLORS[model], width=2),
+        vf = vf.tail(window)
+        viol = vf[vf.violation]
+        st.markdown("**Daily return against the VaR threshold** (percent)")
+        fig = go.Figure()
+        fig.add_trace(
+            go.Scattergl(
+                x=vf.index, y=vf.ret, mode="markers", name="Daily return",
+                marker=dict(size=4, color=MUTED, opacity=0.7),
+            )
         )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=viol.index, y=viol.ret, mode="markers", name=f"Violation ({len(viol)})",
-            marker=dict(size=9, color=CRITICAL, symbol="x", line=dict(width=2, color=CRITICAL)),
+        fig.add_trace(
+            go.Scatter(
+                x=vf.index, y=-vf["var"], mode="lines", name=f"-{level:.0%} VaR",
+                line=dict(color=COLORS[model], width=2),
+            )
         )
-    )
-    st.plotly_chart(fig_layout(fig, 400), width="stretch")
-    with st.expander("Table view (violations in the window)"):
-        st.dataframe(
-            viol[["ret", "var", "es"]].round(3).reset_index().rename(columns={"ret": "return_pct"}),
-            hide_index=True,
-            width="stretch",
+        fig.add_trace(
+            go.Scatter(
+                x=viol.index, y=viol.ret, mode="markers", name=f"Violation ({len(viol)})",
+                marker=dict(size=9, color=CRITICAL, symbol="x", line=dict(width=2, color=CRITICAL)),
+            )
         )
+        st.plotly_chart(fig_layout(fig, 400), width="stretch")
+        with st.expander("Table view (violations in the window)"):
+            st.dataframe(
+                viol[["ret", "var", "es"]].round(3).reset_index().rename(columns={"ret": "return_pct"}),
+                hide_index=True,
+                width="stretch",
+            )
+
 
     st.markdown("**All models for this ticker**")
     tbl = store.var_backtest[

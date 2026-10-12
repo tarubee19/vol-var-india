@@ -1,0 +1,38 @@
+# docker compose up --build
+#   API       http://localhost:8000/docs
+#   Dashboard http://localhost:8501
+#
+# Out of the box both serve the SIMULATED demo results built into the image. To serve a real run,
+# produce results/ with `make fetch && make run` and uncomment the volume lines below.
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      VOLVAR_ASSISTANT_BACKEND: ${VOLVAR_ASSISTANT_BACKEND:-rule}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    # volumes:
+    #   - ./results:/app/results:ro
+
+  dashboard:
+    build: .
+    command:
+      - streamlit
+      - run
+      - app/dashboard.py
+      - --server.address=0.0.0.0
+      - --server.port=8501
+    ports:
+      - "8501:8501"
+    environment:
+      VOLVAR_ASSISTANT_BACKEND: ${VOLVAR_ASSISTANT_BACKEND:-rule}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8501/_stcore/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    # volumes:
+    #   - ./results:/app/results:ro
