@@ -1,4 +1,4 @@
-.PHONY: install test lint synth fetch run api dash eval-rag docker-build clean
+.PHONY: install test lint synth fetch run api dash eval-assistant docker-build clean
 
 PY ?= python
 
@@ -30,8 +30,8 @@ api:
 dash:
 	streamlit run app/dashboard.py
 
-eval-rag:
-	$(PY) scripts/eval_retrieval.py
+eval-assistant:
+	$(PY) scripts/eval_assistant.py
 
 docker-build:
 	docker build -t vol-var-india .

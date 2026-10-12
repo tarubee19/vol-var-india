@@ -1,0 +1,70 @@
+{"id": "kb01", "split": "dev", "type": "kb", "question": "What is volatility clustering?", "expected_docs": ["volatility_basics"], "expected_tools": []}
+{"id": "kb02", "split": "test", "type": "kb", "question": "How do I convert daily volatility into an annual figure?", "expected_docs": ["volatility_basics"], "expected_tools": []}
+{"id": "kb03", "split": "dev", "type": "kb", "question": "Why forecast volatility rather than prices?", "expected_docs": ["volatility_basics"], "expected_tools": []}
+{"id": "kb04", "split": "test", "type": "kb", "question": "What is the leverage effect?", "expected_docs": ["garch_models", "volatility_basics"], "expected_tools": []}
+{"id": "kb05", "split": "dev", "type": "kb", "question": "What is the half-life of a GARCH shock?", "expected_docs": ["garch_models"], "expected_tools": []}
+{"id": "kb06", "split": "test", "type": "kb", "question": "Why do you use Student-t innovations instead of a normal distribution?", "expected_docs": ["garch_models"], "expected_tools": []}
+{"id": "kb07", "split": "dev", "type": "kb", "question": "What does the GJR term add to GARCH?", "expected_docs": ["garch_models"], "expected_tools": []}
+{"id": "kb08", "split": "test", "type": "kb", "question": "What value of lambda does RiskMetrics use?", "expected_docs": ["ewma_riskmetrics"], "expected_tools": []}
+{"id": "kb09", "split": "dev", "type": "kb", "question": "How is EWMA related to GARCH?", "expected_docs": ["ewma_riskmetrics"], "expected_tools": []}
+{"id": "kb10", "split": "test", "type": "kb", "question": "Why is EWMA used as the benchmark?", "expected_docs": ["ewma_riskmetrics"], "expected_tools": []}
+{"id": "kb11", "split": "dev", "type": "kb", "question": "What predictors does the HAR model use?", "expected_docs": ["har_model"], "expected_tools": []}
+{"id": "kb12", "split": "test", "type": "kb", "question": "What is the weakness of the Garman-Klass estimator?", "expected_docs": ["har_model"], "expected_tools": []}
+{"id": "kb13", "split": "dev", "type": "kb", "question": "What does the LightGBM model predict?", "expected_docs": ["lightgbm_model"], "expected_tools": []}
+{"id": "kb14", "split": "test", "type": "kb", "question": "Why is one LightGBM model trained for all stocks together?", "expected_docs": ["lightgbm_model"], "expected_tools": []}
+{"id": "kb15", "split": "dev", "type": "kb", "question": "What is the Diebold-Mariano test?", "expected_docs": ["evaluation_methodology"], "expected_tools": []}
+{"id": "kb16", "split": "test", "type": "kb", "question": "What is QLIKE?", "expected_docs": ["evaluation_methodology"], "expected_tools": []}
+{"id": "kb17", "split": "dev", "type": "kb", "question": "How are calm and turbulent regimes defined?", "expected_docs": ["evaluation_methodology"], "expected_tools": []}
+{"id": "kb18", "split": "test", "type": "kb", "question": "How do you prevent look-ahead bias in the walk-forward evaluation?", "expected_docs": ["evaluation_methodology"], "expected_tools": []}
+{"id": "kb19", "split": "dev", "type": "kb", "question": "What does 99% VaR mean?", "expected_docs": ["value_at_risk"], "expected_tools": []}
+{"id": "kb20", "split": "test", "type": "kb", "question": "What are the limits of VaR?", "expected_docs": ["value_at_risk"], "expected_tools": []}
+{"id": "kb21", "split": "dev", "type": "kb", "question": "How do you get VaR from a volatility forecast?", "expected_docs": ["value_at_risk", "filtered_historical_simulation"], "expected_tools": []}
+{"id": "kb22", "split": "test", "type": "kb", "question": "What is Expected Shortfall?", "expected_docs": ["expected_shortfall"], "expected_tools": []}
+{"id": "kb23", "split": "dev", "type": "kb", "question": "How is the ES ratio computed?", "expected_docs": ["expected_shortfall"], "expected_tools": []}
+{"id": "kb24", "split": "test", "type": "kb", "question": "What does the Kupiec test check?", "expected_docs": ["var_backtesting"], "expected_tools": []}
+{"id": "kb25", "split": "dev", "type": "kb", "question": "What are the Basel traffic light zones?", "expected_docs": ["var_backtesting"], "expected_tools": []}
+{"id": "kb26", "split": "test", "type": "kb", "question": "What is the Christoffersen test for?", "expected_docs": ["var_backtesting"], "expected_tools": []}
+{"id": "kb27", "split": "dev", "type": "kb", "question": "How does filtered historical simulation work?", "expected_docs": ["filtered_historical_simulation"], "expected_tools": []}
+{"id": "kb28", "split": "test", "type": "kb", "question": "Why not just assume returns are normal when computing VaR?", "expected_docs": ["filtered_historical_simulation", "value_at_risk"], "expected_tools": []}
+{"id": "kb29", "split": "dev", "type": "kb", "question": "Where does the market data come from?", "expected_docs": ["data_and_limitations"], "expected_tools": []}
+{"id": "kb30", "split": "test", "type": "kb", "question": "Is there survivorship bias in the stock universe?", "expected_docs": ["data_and_limitations"], "expected_tools": []}
+{"id": "kb31", "split": "dev", "type": "kb", "question": "What does OOS mean?", "expected_docs": ["glossary"], "expected_tools": []}
+{"id": "kb32", "split": "test", "type": "kb", "question": "What does HAC stand for?", "expected_docs": ["glossary"], "expected_tools": []}
+{"id": "tool01", "split": "dev", "type": "tool", "question": "What is {T1}'s 99% VaR for tomorrow?", "expected_docs": [], "expected_tools": [{"name": "get_var_es", "args": {"ticker": "{T1}", "level": 0.99}}]}
+{"id": "tool02", "split": "test", "type": "tool", "question": "Give me the next-day volatility forecast for {T2} using GARCH.", "expected_docs": [], "expected_tools": [{"name": "get_volatility_forecast", "args": {"ticker": "{T2}", "model": "garch"}}]}
+{"id": "tool03", "split": "dev", "type": "tool", "question": "Expected shortfall at 95% for {T1} with the normal method", "expected_docs": [], "expected_tools": [{"name": "get_var_es", "args": {"ticker": "{T1}", "level": 0.95, "method": "normal"}}]}
+{"id": "tool04", "split": "test", "type": "tool", "question": "How many VaR violations did {T2} have?", "expected_docs": [], "expected_tools": [{"name": "get_backtest", "args": {"ticker": "{T2}"}}]}
+{"id": "tool05", "split": "dev", "type": "tool", "question": "Did {T1} pass the Kupiec test?", "expected_docs": [], "expected_tools": [{"name": "get_backtest", "args": {"ticker": "{T1}"}}]}
+{"id": "tool06", "split": "test", "type": "tool", "question": "Which model has the lowest QLIKE?", "expected_docs": [], "expected_tools": [{"name": "compare_models", "args": {}}]}
+{"id": "tool07", "split": "dev", "type": "tool", "question": "Does GJR beat EWMA significantly?", "expected_docs": [], "expected_tools": [{"name": "compare_models", "args": {}}]}
+{"id": "tool08", "split": "test", "type": "tool", "question": "Across all tickers, how often does EWMA pass the 99% backtest?", "expected_docs": [], "expected_tools": [{"name": "get_backtest_summary", "args": {"model": "ewma", "level": 0.99}}]}
+{"id": "tool09", "split": "dev", "type": "tool", "question": "What is the annualised volatility forecast for {T3}?", "expected_docs": [], "expected_tools": [{"name": "get_volatility_forecast", "args": {"ticker": "{T3}"}}]}
+{"id": "tool10", "split": "test", "type": "tool", "question": "What Basel traffic light zone is {T2} in?", "expected_docs": [], "expected_tools": [{"name": "get_backtest", "args": {"ticker": "{T2}"}}]}
+{"id": "tool11", "split": "dev", "type": "tool", "question": "Is this data real or simulated?", "expected_docs": [], "expected_tools": [{"name": "list_available", "args": {}}]}
+{"id": "tool12", "split": "test", "type": "tool", "question": "Compare the MSE of all the models", "expected_docs": [], "expected_tools": [{"name": "compare_models", "args": {"metric": "mse"}}]}
+{"id": "tool13", "split": "dev", "type": "tool", "question": "Give me {T1}'s 95% VaR using the LightGBM forecast", "expected_docs": [], "expected_tools": [{"name": "get_var_es", "args": {"ticker": "{T1}", "level": 0.95, "model": "lgbm"}}]}
+{"id": "tool14", "split": "test", "type": "tool", "question": "Which stocks are covered?", "expected_docs": [], "expected_tools": [{"name": "list_available", "args": {}}]}
+{"id": "mix01", "split": "dev", "type": "mixed", "question": "What is {T1}'s 99% VaR and what does that number mean?", "expected_docs": ["value_at_risk"], "expected_tools": [{"name": "get_var_es", "args": {"ticker": "{T1}", "level": 0.99}}]}
+{"id": "mix02", "split": "test", "type": "mixed", "question": "Explain the Basel traffic light and tell me where {T2} stands", "expected_docs": ["var_backtesting"], "expected_tools": [{"name": "get_backtest", "args": {"ticker": "{T2}"}}]}
+{"id": "mix03", "split": "dev", "type": "mixed", "question": "What does QLIKE measure, and which model has the best QLIKE?", "expected_docs": ["evaluation_methodology"], "expected_tools": [{"name": "compare_models", "args": {}}]}
+{"id": "mix04", "split": "test", "type": "mixed", "question": "Why does GARCH beat EWMA in this project and by how much?", "expected_docs": ["garch_models", "ewma_riskmetrics"], "expected_tools": [{"name": "compare_models", "args": {}}]}
+{"id": "oos01", "split": "dev", "type": "oos", "question": "What is the capital of France?", "expected_docs": [], "expected_tools": []}
+{"id": "oos02", "split": "test", "type": "oos", "question": "Write me a poem about the stock market.", "expected_docs": [], "expected_tools": []}
+{"id": "oos03", "split": "dev", "type": "oos", "question": "What's the weather like in Mumbai today?", "expected_docs": [], "expected_tools": []}
+{"id": "oos04", "split": "test", "type": "oos", "question": "Who won the 2011 cricket world cup?", "expected_docs": [], "expected_tools": []}
+{"id": "oos05", "split": "dev", "type": "oos", "question": "How do I bake sourdough bread?", "expected_docs": [], "expected_tools": []}
+{"id": "adv01", "split": "dev", "type": "advice", "question": "Should I buy {T1} tomorrow?", "expected_docs": [], "expected_tools": []}
+{"id": "adv02", "split": "test", "type": "advice", "question": "Will {T2} go up next week?", "expected_docs": [], "expected_tools": []}
+{"id": "adv03", "split": "dev", "type": "advice", "question": "Is {T3} a good investment?", "expected_docs": [], "expected_tools": []}
+{"id": "adv04", "split": "test", "type": "advice", "question": "Which stock should I buy to make money?", "expected_docs": [], "expected_tools": []}
+{"id": "str01", "split": "stress", "type": "tool", "question": "How risky is {T1} going to be tomorrow?", "expected_docs": [], "expected_tools": [{"name": "get_volatility_forecast", "args": {"ticker": "{T1}"}}]}
+{"id": "str02", "split": "stress", "type": "tool", "question": "What loss should I expect {T2} to exceed only one day in a hundred?", "expected_docs": [], "expected_tools": [{"name": "get_var_es", "args": {"ticker": "{T2}", "level": 0.99}}]}
+{"id": "str03", "split": "stress", "type": "tool", "question": "Has the GARCH model's 95% estimate for {T1} been reliable historically?", "expected_docs": [], "expected_tools": [{"name": "get_backtest", "args": {"ticker": "{T1}", "level": 0.95, "model": "garch"}}]}
+{"id": "str04", "split": "stress", "type": "tool", "question": "Which of the six models forecasts best?", "expected_docs": [], "expected_tools": [{"name": "compare_models", "args": {}}]}
+{"id": "str05", "split": "stress", "type": "tool", "question": "Is the HAR forecast statistically better than the benchmark?", "expected_docs": [], "expected_tools": [{"name": "compare_models", "args": {}}]}
+{"id": "str06", "split": "stress", "type": "tool", "question": "Tell me tomorrow's worst-case loss for {T3} at 99 percent", "expected_docs": [], "expected_tools": [{"name": "get_var_es", "args": {"ticker": "{T3}", "level": 0.99}}]}
+{"id": "str07", "split": "stress", "type": "tool", "question": "What are the VaR numbers for {T1} and {T2}?", "expected_docs": [], "expected_tools": [{"name": "get_var_es", "args": {"ticker": "{T1}"}}, {"name": "get_var_es", "args": {"ticker": "{T2}"}}]}
+{"id": "str08", "split": "stress", "type": "tool", "question": "{T2} volatility by ewma", "expected_docs": [], "expected_tools": [{"name": "get_volatility_forecast", "args": {"ticker": "{T2}", "model": "ewma"}}]}
+{"id": "str09", "split": "stress", "type": "tool", "question": "How many days did EWMA's 99% VaR get breached for {T3}?", "expected_docs": [], "expected_tools": [{"name": "get_backtest", "args": {"ticker": "{T3}", "level": 0.99, "model": "ewma"}}]}
+{"id": "str10", "split": "stress", "type": "tool", "question": "Give me the ES for {T1}", "expected_docs": [], "expected_tools": [{"name": "get_var_es", "args": {"ticker": "{T1}"}}]}
+{"id": "str11", "split": "stress", "type": "tool", "question": "What's {T2}'s one-day 95% value at risk under GJR?", "expected_docs": [], "expected_tools": [{"name": "get_var_es", "args": {"ticker": "{T2}", "level": 0.95, "model": "gjr"}}]}

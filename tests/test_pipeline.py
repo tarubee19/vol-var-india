@@ -4,26 +4,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from volvar.config import ExperimentConfig
 from volvar.forecast import extend_panels, next_day_variances
 from volvar.models.ml import FEATURE_COLUMNS, build_ml_frame
-from volvar.pipeline import detect_dataset_label, run_pipeline
-from volvar.synthetic import write_universe
-
-SMALL = ExperimentConfig(
-    min_train=600,
-    refit_every=126,
-    lgbm_params={"n_estimators": 30, "num_leaves": 4, "min_child_samples": 50, "verbosity": -1, "n_jobs": 1},
-)
-
-
-@pytest.fixture(scope="module")
-def pipeline_run(tmp_path_factory, small_universe):
-    data_dir = tmp_path_factory.mktemp("data")
-    out_dir = tmp_path_factory.mktemp("results")
-    write_universe(small_universe, data_dir)
-    summary = run_pipeline(data_dir, out_dir, cfg=SMALL, n_jobs=1, verbose=False)
-    return summary, out_dir
+from volvar.pipeline import detect_dataset_label
 
 
 def test_pipeline_writes_all_outputs(pipeline_run):
@@ -41,10 +24,10 @@ def test_pipeline_writes_all_outputs(pipeline_run):
     assert not (out / "loss_covid_window.csv").exists()  # never produced for simulated data
 
 
-def test_pipeline_results_are_sane(pipeline_run):
+def test_pipeline_results_are_sane(pipeline_run, small_cfg):
     summary, out = pipeline_run
     comp = pd.read_csv(out / "model_comparison.csv", index_col="model")
-    assert set(comp.index) == set(SMALL.models)
+    assert set(comp.index) == set(small_cfg.models)
     assert comp["qlike"].notna().all() and (comp["n"] == comp["n"].iloc[0]).all()
     bt = pd.read_csv(out / "var_backtest.csv")
     assert {"fhs", "normal"} == set(bt["method"]) and {0.95, 0.99} == set(bt["level"])
@@ -52,7 +35,7 @@ def test_pipeline_results_are_sane(pipeline_run):
     meta = json.loads((out / "meta.json").read_text())
     assert meta["dataset"] == "simulated" and meta["next_day_target"]
     nxt = pd.read_csv(out / "next_day.csv")
-    assert (nxt["var"] > 0).all() and set(nxt["model"]) == set(SMALL.models)
+    assert (nxt["var"] > 0).all() and set(nxt["model"]) == set(small_cfg.models)
     risk = pd.read_csv(out / "next_day_var.csv")
     assert (risk["es_pct"] >= risk["var_pct"]).all()
 
@@ -80,8 +63,8 @@ def test_next_day_placeholder_cannot_influence_its_own_forecast(small_panels):
     pd.testing.assert_frame_equal(last_a, last_b)
 
 
-def test_next_day_ewma_matches_hand_calculation(small_panels):
-    out = next_day_variances(small_panels, SMALL)
+def test_next_day_ewma_matches_hand_calculation(small_panels, small_cfg):
+    out = next_day_variances(small_panels, small_cfg)
     p = small_panels["SIM01"]
     from volvar.models.baselines import ewma_variance
 
