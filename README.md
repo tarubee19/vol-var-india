@@ -108,6 +108,7 @@ Lowest QLIKE per regime - calm: LightGBM (pooled); normal: LightGBM (pooled); tu
 | gjr | 3.8545 | 1851.6445 | 1424 |
 | har | 4.37 | 1828.2352 | 1424 |
 | lgbm | 3.5291 | 1781.085 | 1424 |
+
 **Value-at-Risk backtests** - mean one-day violation rate across 16 tickers, the share of tickers passing the conditional-coverage test at the 5% level, and the mean ES ratio (realised / predicted Expected Shortfall on violation days; 1 is ideal). FHS = filtered historical simulation.
 
 99% level (expected violation rate 1.00%):
@@ -150,8 +151,8 @@ Caveats. The test split was written by the same author as the router, so its 100
 ## Figures
 
 All five figures are produced by `scripts/run_pipeline.py` into `results/figures/`. The ones below
-come from the run named in the Results heading (simulated unless you regenerated them on real
-data), and each carries a banner when the data is simulated.
+come from the real-data run described in the Results section, and each carries a banner when the
+data is simulated.
 
 | | |
 |---|---|
@@ -175,7 +176,7 @@ Full specification in [`docs/methodology.md`](docs/methodology.md). In brief:
 
 ## The assistant
 
-`src/volvar/assistant/` answers questions such as *"What is SIM01's 99% VaR for tomorrow?"*,
+`src/volvar/assistant/` answers questions such as *"What is RELIANCE's 99% VaR for tomorrow?"*,
 *"Which model has the lowest QLIKE?"* or *"What is Expected Shortfall?"*.
 
 * **Tools** read `results/`: dataset info, next-day volatility, VaR/ES, model comparison, per-ticker
@@ -252,12 +253,13 @@ Python 3.11, 3.12 and 3.13, then builds the Docker image and smoke-tests the API
 * **Survivorship bias:** the 15 stocks are current large constituents.
 * **Daily data only:** no intraday volatility, and Garman-Klass ignores overnight gaps.
 * **Per-instrument risk:** VaR is for single stocks, not a portfolio.
-* **Low test power at 99%:** about 13 expected violations in 1,350 days, so passing a backtest is
-  weak evidence and the tests are noisy.
+* **Low test power at 99%:** about 19 expected violations per ticker in roughly 1,900 days, so
+  passing a backtest is weak evidence and the tests are noisy.
 * **FHS under-covers slightly at 99%** in these runs (violation rates a little above 1%), a known
   effect of estimating a 1% quantile from a 500-day window.
-* **Simulated results prove nothing about markets.** Real-data results require running the
-  pipeline on downloaded data.
+* **Results are one backtest on one universe.** The 16 series share one market, so "16 of 16
+  tickers" is not 16 independent confirmations, and no multiple-comparison correction is applied
+  across the six models. Simulated results (used for CI and development) say nothing about markets.
 * **The assistant's evaluation is small and author-written;** the router is brittle on paraphrases
   and the live LLM path is untested end to end (see above).
 * **Docker:** the image and workflow are written and their commands were verified in a clean
