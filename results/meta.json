@@ -1,27 +1,28 @@
 {
-  "dataset": "simulated",
+  "dataset": "real",
   "tickers": [
-    "SIM01",
-    "SIM02",
-    "SIM03",
-    "SIM04",
-    "SIM05",
-    "SIM06",
-    "SIM07",
-    "SIM08",
-    "SIM09",
-    "SIM10",
-    "SIM11",
-    "SIM12",
-    "SIM13",
-    "SIM14",
-    "SIM15"
+    "ASIANPAINT",
+    "AXISBANK",
+    "BHARTIARTL",
+    "HDFCBANK",
+    "HINDUNILVR",
+    "ICICIBANK",
+    "INFY",
+    "ITC",
+    "KOTAKBANK",
+    "LT",
+    "MARUTI",
+    "NIFTY50",
+    "RELIANCE",
+    "SBIN",
+    "SUNPHARMA",
+    "TCS"
   ],
   "data_start": "2015-01-02",
-  "data_end": "2024-12-18",
-  "oos_start": "2018-11-02",
-  "oos_end": "2024-12-18",
-  "next_day_target": "2024-12-19",
+  "data_end": "2026-10-13",
+  "oos_start": "2019-01-22",
+  "oos_end": "2026-10-13",
+  "next_day_target": "2026-10-14",
   "config": {
     "min_train": 1000,
     "refit_every": 63,
@@ -57,9 +58,9 @@
   },
   "versions": {
     "volvar": "0.1.0",
-    "python": "3.13.16",
-    "numpy": "2.5.3",
-    "pandas": "3.0.5"
+    "python": "3.13.4",
+    "numpy": "2.5.4",
+    "pandas": "3.0.6"
   },
-  "runtime_seconds": 41.9
+  "runtime_seconds": 157.6
 }

@@ -71,58 +71,68 @@ docker compose up --build   # API :8000, dashboard :8501
 ```
 
 <!-- RESULTS:START -->
-### Results on SIMULATED data (pipeline validation, not market performance)
+### Results on real Nifty 50 data
 
-> The numbers below come from a simulated GJR-GARCH universe (tickers `SIM01`...). GARCH-family models winning is therefore expected by construction. Real-data results come from `make fetch && make run`, then `python scripts/update_readme.py`.
+> 16 series, 2019-01-22 to 2026-10-13 out of sample.
 
-**Variance forecast accuracy** - 23,985 out-of-sample forecasts per model on a common sample (2018-11-02 to 2024-12-18). QLIKE: lower is better. The gain is the QLIKE reduction relative to EWMA; DM p is a Newey-West Diebold-Mariano test pooled over tickers.
+**Variance forecast accuracy** - 30,504 out-of-sample forecasts per model on a common sample (2019-01-22 to 2026-10-13). QLIKE: lower is better. The gain is the QLIKE reduction relative to EWMA; DM p is a Newey-West Diebold-Mariano test pooled over tickers.
 
 | Model | QLIKE | Gain vs EWMA | DM p-value | MSE | Tickers won |
 |---|---|---|---|---|---|
-| GJR-GARCH(1,1,1)-t | 1.3966 | +0.0178 | <0.001 | 15.81 | 10 of 15 |
-| GARCH(1,1)-t | 1.3992 | +0.0153 | <0.001 | 15.79 | 5 of 15 |
-| LightGBM (pooled) | 1.4038 | +0.0107 | 0.003 | 15.85 | 0 of 15 |
-| EWMA (lambda=0.94) | 1.4145 | benchmark | - | 15.87 | 0 of 15 |
-| HAR (Garman-Klass) | 1.4197 | -0.0052 | 0.368 | 16.11 | 0 of 15 |
-| Historical (250d) | 1.4677 | -0.0532 | <0.001 | 16.85 | 0 of 15 |
+| LightGBM (pooled) | 1.7696 | +0.0748 | <0.001 | 116.15 | 16 of 16 |
+| GJR-GARCH(1,1,1)-t | 1.8206 | +0.0238 | 0.040 | 120.02 | 0 of 16 |
+| GARCH(1,1)-t | 1.8237 | +0.0207 | 0.108 | 121.56 | 0 of 16 |
+| EWMA (lambda=0.94) | 1.8445 | benchmark | - | 121.49 | 0 of 16 |
+| HAR (Garman-Klass) | 1.9043 | -0.0597 | 0.025 | 118.87 | 0 of 16 |
+| Historical (250d) | 1.9277 | -0.0832 | 0.072 | 129.17 | 0 of 16 |
 
-Lowest QLIKE: GJR-GARCH(1,1,1)-t. Significantly better than EWMA at the 5% level: GJR-GARCH(1,1,1)-t, GARCH(1,1)-t, LightGBM (pooled). Significantly worse: Historical (250d).
+Lowest QLIKE: LightGBM (pooled). Significantly better than EWMA at the 5% level: LightGBM (pooled), GJR-GARCH(1,1,1)-t. Significantly worse: HAR (Garman-Klass).
 
 **QLIKE by volatility regime** (terciles of trailing 22-day market variance, known the day before).
 
 | Regime | Historical (250d) | EWMA (lambda=0.94) | GARCH(1,1)-t | GJR-GARCH(1,1,1)-t | HAR (Garman-Klass) | LightGBM (pooled) |
 |---|---|---|---|---|---|---|
-| Calm | 1.3261 | 1.2879 | 1.2572 | 1.2532 | 1.2741 | 1.2635 |
-| Normal | 1.3947 | 1.3446 | 1.3374 | 1.3375 | 1.3541 | 1.3471 |
-| Turbulent | 1.7086 | 1.6350 | 1.6280 | 1.6243 | 1.6568 | 1.6251 |
+| Calm | 1.4353 | 1.4674 | 1.4214 | 1.4238 | 1.4766 | 1.3901 |
+| Normal | 1.7839 | 1.7742 | 1.7443 | 1.7467 | 1.7878 | 1.7077 |
+| Turbulent | 2.5853 | 2.3101 | 2.3247 | 2.3107 | 2.4674 | 2.2300 |
 
-Lowest QLIKE per regime - calm: GJR-GARCH(1,1,1)-t; normal: GARCH(1,1)-t; turbulent: GJR-GARCH(1,1,1)-t.
+Lowest QLIKE per regime - calm: LightGBM (pooled); normal: LightGBM (pooled); turbulent: LightGBM (pooled).
 
-**Value-at-Risk backtests** - mean one-day violation rate across 15 tickers, the share of tickers passing the conditional-coverage test at the 5% level, and the mean ES ratio (realised / predicted Expected Shortfall on violation days; 1 is ideal). FHS = filtered historical simulation.
+**COVID window (Feb-Jun 2020)**
+
+| model | qlike | mse | n |
+|---|---|---|---|
+| hist | 5.1571 | 2008.555 | 1424 |
+| ewma | 3.7617 | 1878.5724 | 1424 |
+| garch | 3.9504 | 1887.7864 | 1424 |
+| gjr | 3.8545 | 1851.6445 | 1424 |
+| har | 4.37 | 1828.2352 | 1424 |
+| lgbm | 3.5291 | 1781.085 | 1424 |
+**Value-at-Risk backtests** - mean one-day violation rate across 16 tickers, the share of tickers passing the conditional-coverage test at the 5% level, and the mean ES ratio (realised / predicted Expected Shortfall on violation days; 1 is ideal). FHS = filtered historical simulation.
 
 99% level (expected violation rate 1.00%):
 
 | Model | FHS: violation rate | FHS: tickers passing | FHS: ES ratio | Normal: violation rate | Normal: tickers passing | Normal: ES ratio |
 |---|---|---|---|---|---|---|
-| Historical (250d) | 1.28% | 80% | 0.99 | 1.41% | 53% | 1.10 |
-| EWMA (lambda=0.94) | 1.20% | 100% | 0.97 | 1.53% | 73% | 1.07 |
-| GARCH(1,1)-t | 1.22% | 93% | 0.98 | 1.16% | 87% | 1.06 |
-| GJR-GARCH(1,1,1)-t | 1.18% | 100% | 0.99 | 1.15% | 100% | 1.07 |
-| HAR (Garman-Klass) | 1.14% | 100% | 1.00 | 1.17% | 80% | 1.08 |
-| LightGBM (pooled) | 1.14% | 100% | 0.99 | 1.19% | 100% | 1.06 |
+| Historical (250d) | 1.31% | 69% | 1.04 | 1.74% | 19% | 1.34 |
+| EWMA (lambda=0.94) | 1.28% | 100% | 1.00 | 1.83% | 12% | 1.25 |
+| GARCH(1,1)-t | 1.26% | 100% | 1.01 | 1.57% | 38% | 1.24 |
+| GJR-GARCH(1,1,1)-t | 1.28% | 94% | 1.00 | 1.53% | 56% | 1.23 |
+| HAR (Garman-Klass) | 1.28% | 75% | 1.02 | 1.85% | 56% | 1.24 |
+| LightGBM (pooled) | 1.31% | 94% | 0.99 | 1.59% | 50% | 1.20 |
 
 95% level (expected violation rate 5.00%):
 
 | Model | FHS: violation rate | FHS: tickers passing | FHS: ES ratio | Normal: violation rate | Normal: tickers passing | Normal: ES ratio |
 |---|---|---|---|---|---|---|
-| Historical (250d) | 5.39% | 80% | 1.00 | 4.68% | 80% | 1.07 |
-| EWMA (lambda=0.94) | 5.23% | 100% | 0.99 | 5.29% | 100% | 1.05 |
-| GARCH(1,1)-t | 5.30% | 100% | 0.99 | 4.34% | 73% | 1.05 |
-| GJR-GARCH(1,1,1)-t | 5.28% | 93% | 0.99 | 4.51% | 73% | 1.04 |
-| HAR (Garman-Klass) | 5.27% | 93% | 0.99 | 4.33% | 73% | 1.06 |
-| LightGBM (pooled) | 5.25% | 100% | 0.99 | 4.55% | 93% | 1.04 |
+| Historical (250d) | 5.47% | 56% | 1.01 | 4.17% | 38% | 1.27 |
+| EWMA (lambda=0.94) | 5.35% | 94% | 1.01 | 4.91% | 88% | 1.19 |
+| GARCH(1,1)-t | 5.21% | 81% | 1.01 | 3.99% | 38% | 1.20 |
+| GJR-GARCH(1,1,1)-t | 5.17% | 94% | 1.01 | 3.94% | 38% | 1.19 |
+| HAR (Garman-Klass) | 5.45% | 88% | 0.99 | 4.57% | 31% | 1.20 |
+| LightGBM (pooled) | 5.28% | 94% | 1.00 | 4.43% | 81% | 1.15 |
 
-**Assistant evaluation** (70 author-written questions, rule-based backend; results dataset: simulated). Small and in-domain: a regression test, not a benchmark.
+**Assistant evaluation** (70 author-written questions, rule-based backend; results dataset: real). Small and in-domain: a regression test, not a benchmark.
 
 | Check | Result | n |
 |---|---|---|

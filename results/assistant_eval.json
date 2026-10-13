@@ -1,13 +1,13 @@
 {
-  "dataset": "simulated",
+  "dataset": "real",
   "n_questions": 70,
   "min_coverage": 0.6,
   "retrieval_dev": {
     "bm25": {
       "n": 18,
-      "hit@1": 0.8333333333333334,
+      "hit@1": 0.8888888888888888,
       "hit@3": 1.0,
-      "mrr": 0.9074074074074073
+      "mrr": 0.9351851851851851
     },
     "tfidf": {
       "n": 18,
@@ -33,9 +33,9 @@
   "retrieval_all": {
     "bm25": {
       "n": 36,
-      "hit@1": 0.8888888888888888,
+      "hit@1": 0.9166666666666666,
       "hit@3": 1.0,
-      "mrr": 0.9351851851851851
+      "mrr": 0.949074074074074
     },
     "tfidf": {
       "n": 36,
@@ -176,15 +176,15 @@
     {
       "id": "str02",
       "split": "stress",
-      "question": "What loss should I expect SIM02 to exceed only one day in a hundred?",
+      "question": "What loss should I expect AXISBANK to exceed only one day in a hundred?",
       "issues": [
-        "tools=[('get_backtest', {'ticker': 'SIM02'})]"
+        "tools=[('get_backtest', {'ticker': 'AXISBANK'})]"
       ]
     },
     {
       "id": "str03",
       "split": "stress",
-      "question": "Has the GARCH model's 95% estimate for SIM01 been reliable historically?",
+      "question": "Has the GARCH model's 95% estimate for ASIANPAINT been reliable historically?",
       "issues": [
         "tools=[]"
       ]
@@ -208,7 +208,7 @@
     {
       "id": "str06",
       "split": "stress",
-      "question": "Tell me tomorrow's worst-case loss for SIM03 at 99 percent",
+      "question": "Tell me tomorrow's worst-case loss for BHARTIARTL at 99 percent",
       "issues": [
         "tools=[('compare_models', {})]"
       ]
