@@ -2,8 +2,8 @@
 #   API       http://localhost:8000/docs
 #   Dashboard http://localhost:8501
 #
-# Out of the box both serve the SIMULATED demo results built into the image. To serve a real run,
-# produce results/ with `make fetch && make run` and uncomment the volume lines below.
+# Both serve the real-data results committed in results/ (refreshed daily). To serve a run you
+# produced yourself, uncomment the volume lines below.
 services:
   api:
     build: .

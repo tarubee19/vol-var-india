@@ -27,13 +27,16 @@ COPY .streamlit ./.streamlit
 ENV PYTHONPATH=/app/src \
     VOLVAR_RESULTS_DIR=/app/results
 
-# Self-contained demo: simulate data and run the whole pipeline at build time. Everything it
-# produces is labelled SIMULATED. To serve real numbers, mount the results folder of a real run
-# over /app/results (see docker-compose.yml).
-RUN python scripts/make_synthetic.py --out data/synthetic \
-    && python scripts/run_pipeline.py --data-dir data/synthetic --results-dir results \
-        --n-jobs 2 --no-figures \
-    && rm -rf data
+# Serve the committed real-data results (refreshed every weekday by .github/workflows/refresh.yml).
+# For an offline demo on simulated data instead, build with --build-arg SIMULATED=1.
+COPY results ./results
+ARG SIMULATED=""
+RUN if [ -n "$SIMULATED" ]; then \
+        rm -rf results && python scripts/make_synthetic.py --out data/synthetic \
+        && python scripts/run_pipeline.py --data-dir data/synthetic --results-dir results \
+            --n-jobs 2 --no-figures \
+        && rm -rf data; \
+    fi
 
 RUN useradd --create-home --uid 1000 app && chown -R app:app /app
 USER app

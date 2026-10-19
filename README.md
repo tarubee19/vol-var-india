@@ -1,74 +1,125 @@
-# vol-var-india
+# vol-var-india: a market-risk engine for Nifty 50 equities
 
-Walk-forward **volatility forecasting** and **Value-at-Risk / Expected Shortfall backtesting** for
-Indian large-cap equities (Nifty 50), served through a **FastAPI** service, a **Streamlit**
-dashboard and a **grounded assistant** that answers questions from the results with tool calling
-and retrieval, and checks that every number it quotes comes from tool output.
+Walk-forward **volatility forecasting**, **Value-at-Risk / Expected Shortfall** backtesting and
+**portfolio risk** (attribution and stress tests) for 15 large Nifty 50 stocks and the index, on
+real daily prices from 2015 onward. The whole study is **re-run from fresh market data every
+weekday** by GitHub Actions, and served through a FastAPI service, a Streamlit dashboard and a
+grounded Q&A assistant.
 
 [![CI](https://github.com/tarubee19/vol-var-india/actions/workflows/ci.yml/badge.svg)](https://github.com/tarubee19/vol-var-india/actions/workflows/ci.yml)
+[![Daily risk refresh](https://github.com/tarubee19/vol-var-india/actions/workflows/refresh.yml/badge.svg)](https://github.com/tarubee19/vol-var-india/actions/workflows/refresh.yml)
 ![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-> **Read the Results section's heading first.** It states whether the numbers come from real
-> market data or from the simulated universe used for development and CI. Simulated results
-> validate the code; they say nothing about real markets.
+## Headline results
+
+Every number below is written by `scripts/update_readme.py` from the files in `results/`, never
+typed by hand, and refreshed with the data.
+
+<!-- HEADLINE:START -->
+- **Forecasting:** on 30,504 out-of-sample forecasts (2019-01-22 to 2026-10-13), LightGBM (pooled) cuts QLIKE loss by 4.1% against the RiskMetrics EWMA benchmark (Diebold-Mariano p <0.001) and has the lowest loss on 16 of 16 series.
+- **Single-stock VaR:** 99% filtered-historical-simulation VaR on the EWMA forecast passes Christoffersen's conditional-coverage test on 100% of series (mean ES ratio 1.00).
+<!-- HEADLINE:END -->
+
+| | |
+|---|---|
+| ![Model comparison](results/figures/fig_model_comparison.png) | ![Portfolio VaR](results/figures/fig_portfolio_var.png) |
+
+## Today's risk snapshot
+
+<!-- SNAPSHOT:START -->
+Forecasts for **2026-10-14**, using closing prices up to 2026-10-13. Rebuilt every weekday after the NSE close by the [daily refresh workflow](https://github.com/tarubee19/vol-var-india/actions/workflows/refresh.yml).
+
+<details><summary>Per-stock next-day risk (LightGBM (pooled), filtered historical simulation)</summary>
+
+| Ticker | Daily vol | Annualised vol | 99% VaR | 99% ES |
+|---|---|---|---|---|
+| TCS | 1.94% | 30.7% | 5.60% | 7.00% |
+| ITC | 1.82% | 28.8% | 4.66% | 9.85% |
+| INFY | 1.43% | 22.6% | 4.45% | 5.32% |
+| AXISBANK | 1.31% | 20.8% | 3.89% | 5.39% |
+| HINDUNILVR | 1.40% | 22.3% | 3.83% | 5.92% |
+| MARUTI | 1.41% | 22.4% | 3.73% | 4.62% |
+| LT | 1.30% | 20.6% | 3.64% | 4.33% |
+| BHARTIARTL | 1.19% | 18.9% | 3.41% | 3.89% |
+| KOTAKBANK | 1.22% | 19.3% | 3.25% | 4.65% |
+| ASIANPAINT | 1.19% | 18.8% | 2.97% | 4.09% |
+| HDFCBANK | 1.11% | 17.6% | 2.72% | 3.70% |
+| SUNPHARMA | 1.07% | 17.0% | 2.68% | 3.27% |
+| ICICIBANK | 1.12% | 17.7% | 2.67% | 3.11% |
+| RELIANCE | 1.09% | 17.3% | 2.56% | 3.41% |
+| SBIN | 1.13% | 17.9% | 2.52% | 3.54% |
+| NIFTY50 | 0.91% | 14.5% | 2.43% | 2.80% |
+
+</details>
+<!-- SNAPSHOT:END -->
 
 ## What it does
 
-1. Loads and validates daily OHLCV data for 15 Nifty 50 stocks plus the index.
-2. Produces **one-day-ahead variance forecasts** from six models, all walk-forward with no
-   look-ahead (checked by tests): rolling historical variance, EWMA (the benchmark), GARCH(1,1)-t,
-   GJR-GARCH(1,1,1)-t, a HAR regression on Garman-Klass range variance, and a pooled LightGBM.
-3. Scores them with robust losses (QLIKE, MSE), **Diebold-Mariano tests with Newey-West errors**
-   against EWMA, per-ticker wins, volatility regimes and (on real data) the COVID window.
-4. Turns each forecast into 95% and 99% **VaR and ES**, by a normal assumption and by
-   **filtered historical simulation**, and backtests them: Kupiec, Christoffersen independence and
-   conditional coverage, Basel traffic light, ES ratio.
-5. Serves it all: REST API, dashboard, and an assistant over the results and a methodology
-   knowledge base.
+1. **Data:** downloads and validates daily OHLCV for 15 Nifty 50 stocks and the index (Yahoo
+   Finance, split and dividend adjusted).
+2. **Forecasts:** one-day-ahead variance forecasts from six models, all walk-forward with no
+   look-ahead (enforced by tests): rolling historical variance, EWMA (the RiskMetrics benchmark),
+   GARCH(1,1)-t, GJR-GARCH(1,1,1)-t, a HAR regression on Garman-Klass range variance, and a pooled
+   LightGBM.
+3. **Evaluation:** robust losses (QLIKE, MSE), **Diebold-Mariano tests with Newey-West errors**
+   against EWMA, per-ticker wins, volatility regimes and the COVID-2020 window.
+4. **Single-stock VaR/ES** at 95% and 99%, by a normal assumption and by **filtered historical
+   simulation**, backtested with Kupiec, Christoffersen (independence and conditional coverage),
+   the Basel traffic light and the ES ratio.
+5. **Portfolio risk** for an equal-weight INR 1 crore book: four portfolio VaR/ES models
+   (historical simulation, EWMA covariance with normal and FHS tails, and a bottom-up model that
+   combines each stock's LightGBM forecast with the EWMA correlation matrix), backtested at 95%,
+   97.5% (the Basel FRTB ES level) and 99%; **Euler risk attribution** by position; **stress
+   tests** that replay past Indian market shocks on today's book plus beta-mapped and sector shocks.
+6. **Serving:** REST API, dashboard, and an assistant that answers from the results and a
+   methodology knowledge base and checks every number it quotes against tool output.
+7. **Automation:** a scheduled workflow fetches the day's prices after the NSE close, re-runs
+   everything and commits the refreshed results and README.
 
 ```mermaid
 flowchart LR
-    A[OHLCV CSVs] --> B[validate + panel<br/>returns, GK variance]
+    Y[Yahoo Finance<br/>daily OHLCV] --> B[validate + panel<br/>returns, GK variance]
     B --> C[6 walk-forward<br/>forecasters]
-    C --> D[loss tables, DM tests,<br/>regimes]
-    C --> E[VaR / ES<br/>normal + FHS]
+    C --> D[losses, DM tests,<br/>regimes]
+    C --> E[single-stock VaR/ES<br/>normal + FHS]
     E --> F[Kupiec, Christoffersen,<br/>Basel, ES ratio]
+    B --> P[equal-weight book<br/>EWMA covariance]
+    C --> P
+    P --> Q[portfolio VaR/ES,<br/>Euler attribution,<br/>stress tests]
     D --> G[(results/)]
     F --> G
+    Q --> G
     G --> H[FastAPI]
     G --> I[Streamlit]
     G --> J[Assistant<br/>tools + BM25 + grounding]
-    K[docs/kb] --> J
+    G --> R[README<br/>update_readme.py]
+    S[GitHub Actions<br/>weekdays 18:15 IST] --> Y
 ```
 
 ## Quick start
 
 ```bash
 git clone https://github.com/tarubee19/vol-var-india && cd vol-var-india
-pip install -e ".[dashboard,dev]"
+pip install -e ".[dashboard,data,dev]"
 
-# Simulated demo (everything it produces is labelled SIMULATED)
-make synth
-make run DATA=data/synthetic
-
-# Real data: needs internet access to Yahoo Finance
-pip install -e ".[data]"
-make fetch              # writes data/raw/<NAME>.csv
-make run                # walk-forward run, writes results/
-python scripts/update_readme.py   # refreshes the Results section from results/
+make fetch              # download prices into data/raw/ (needs internet access to Yahoo Finance)
+make run                # full walk-forward study, writes results/ (about 3 minutes)
+python scripts/update_readme.py   # rewrite the README numbers from results/
 
 make api                # http://localhost:8000/docs
 make dash               # http://localhost:8501
 make test               # pytest
 ```
 
-Or with Docker (the image builds a simulated demo; mount `./results` to serve a real run, see
-`docker-compose.yml`):
+The committed `results/` already hold the latest real-data run, so `make api` and `make dash`
+work straight after cloning. With Docker:
 
 ```bash
-docker compose up --build   # API :8000, dashboard :8501
+docker compose up --build   # API :8000, dashboard :8501, serving the committed results
 ```
+
+## Results
 
 <!-- RESULTS:START -->
 ### Results on real Nifty 50 data
@@ -108,7 +159,6 @@ Lowest QLIKE per regime - calm: LightGBM (pooled); normal: LightGBM (pooled); tu
 | gjr | 3.8545 | 1851.6445 | 1424 |
 | har | 4.37 | 1828.2352 | 1424 |
 | lgbm | 3.5291 | 1781.085 | 1424 |
-
 **Value-at-Risk backtests** - mean one-day violation rate across 16 tickers, the share of tickers passing the conditional-coverage test at the 5% level, and the mean ES ratio (realised / predicted Expected Shortfall on violation days; 1 is ideal). FHS = filtered historical simulation.
 
 99% level (expected violation rate 1.00%):
@@ -150,13 +200,11 @@ Caveats. The test split was written by the same author as the router, so its 100
 
 ## Figures
 
-All five figures are produced by `scripts/run_pipeline.py` into `results/figures/`. The ones below
-come from the real-data run described in the Results section, and each carries a banner when the
-data is simulated.
+Rendered by `scripts/run_pipeline.py` into `results/figures/` from the real-data run.
 
 | | |
 |---|---|
-| ![Model comparison](results/figures/fig_model_comparison.png) | ![Regimes](results/figures/fig_regime_gain.png) |
+| ![Risk attribution](results/figures/fig_risk_contrib.png) | ![Regimes](results/figures/fig_regime_gain.png) |
 | ![Volatility forecast](results/figures/fig_vol_forecast.png) | ![VaR backtest](results/figures/fig_var_backtest.png) |
 
 ![Violation heatmap](results/figures/fig_violation_heatmap.png)
@@ -173,30 +221,26 @@ Full specification in [`docs/methodology.md`](docs/methodology.md). In brief:
   tested with a pooled Diebold-Mariano test (Newey-West, 5 lags).
 * VaR/ES come from the model's volatility, either with a normal quantile or with filtered
   historical simulation (500-day window of standardised returns).
+* The portfolio is a daily-rebalanced equal-weight book of the 15 stocks. Its covariance is
+  RiskMetrics EWMA; the bottom-up model rescales the EWMA correlation matrix with each stock's
+  LightGBM volatility forecast. Euler allocation splits tomorrow's VaR into position components that
+  add up exactly. Stress scenarios are dated historical windows replayed on today's weights plus
+  instantaneous shocks (Nifty 50 -10% through 250-day betas, banks -15%, IT services -12%).
 
 ## The assistant
 
 `src/volvar/assistant/` answers questions such as *"What is RELIANCE's 99% VaR for tomorrow?"*,
-*"Which model has the lowest QLIKE?"* or *"What is Expected Shortfall?"*.
+*"Which model has the lowest QLIKE?"* or *"What is Expected Shortfall?"*. Tools read `results/`
+(arguments validated, every result carries the dataset label); BM25 retrieval over the 12
+methodology notes in `docs/kb/` handles definitions and abstains when they do not cover the
+question; a **grounding check** flags any number or date in an answer that does not match tool
+output; investment-advice and price-prediction questions are refused.
 
-* **Tools** read `results/`: dataset info, next-day volatility, VaR/ES, model comparison, per-ticker
-  backtest and cross-ticker backtest summary. Arguments are validated strictly and every result
-  carries the dataset label.
-* **Retrieval:** BM25 over the 12 methodology notes in `docs/kb/`, split by section, with
-  abstention when the notes do not cover the question.
-* **Grounding check:** every number and date in an answer must match tool output (to the precision
-  written) or the question; otherwise the reply is flagged and a warning is appended.
-* **Refusals:** investment-advice and price-prediction questions are declined; out-of-scope
-  questions get an explicit "not covered" answer rather than a guess.
-* **Backends:** a deterministic *rule-based* backend (default; a regex router plus templates, **not
-  a language model**) used by the tests, CI and the Docker demo, and an optional *Anthropic*
-  tool-use backend (`VOLVAR_ASSISTANT_BACKEND=anthropic`, needs `pip install anthropic` and
-  `ANTHROPIC_API_KEY`). The tool-use loop is unit-tested with a scripted client; **it has not been
-  run against the live API**, so treat that path as untested end to end.
-
-Evaluation numbers are in the Results section. The rule-based router handles the questions it was
-designed around and only about half of naturally worded paraphrases, which is the main reason to
-use the LLM backend.
+The default backend is deterministic and rule-based (a router plus templates, not a language
+model), which keeps CI and the Docker demo reproducible. An Anthropic tool-use backend
+(`VOLVAR_ASSISTANT_BACKEND=anthropic`, needs `ANTHROPIC_API_KEY`) is unit-tested with a scripted
+client but has not been evaluated against the live API. Evaluation numbers are in the results
+section; the honest figure is tool selection on naturally worded paraphrases.
 
 ## API
 
@@ -209,16 +253,40 @@ use the LLM backend.
 | `GET /backtest/{ticker}?level=&model=&method=` | violations, Kupiec, Christoffersen, Basel zone |
 | `GET /backtest-summary?level=&model=&method=` | the backtest averaged over tickers |
 | `GET /models?metric=` | QLIKE/MSE ranking with Diebold-Mariano vs EWMA |
+| `GET /portfolio` | book VaR/ES (percent and INR), backtests, risk contributions, stress tests |
 | `POST /assistant` | `{"question": "..."}` to answer, tool calls, sources, grounding flag |
 
-Every response carries an `X-Data-Label` header (`simulated` or `real`). Interactive docs at
-`/docs`.
+Every response carries an `X-Data-Label` header. Interactive docs at `/docs`.
 
 ```bash
 curl -s "localhost:8000/var/RELIANCE?level=0.99" | python -m json.tool
+curl -s localhost:8000/portfolio | python -m json.tool
 ```
 
-The service is a demo: no authentication or rate limiting, so do not expose it publicly as is.
+The service has no authentication or rate limiting, so do not expose it publicly as is.
+
+## Daily refresh
+
+[`.github/workflows/refresh.yml`](.github/workflows/refresh.yml) runs at 12:45 UTC (18:15 IST) on
+weekdays and can be started by hand from the Actions tab. It downloads prices, re-runs the full
+walk-forward study, re-scores the assistant, rewrites the README blocks and commits the changed
+files in `results/` (figures on Fridays and manual runs). Each refresh is one commit, so the
+history doubles as an audit trail of the daily risk numbers.
+
+## Development and testing on simulated data
+
+`make synth && make run DATA=data/synthetic` builds a simulated universe (tickers `SIM01`...,
+market factor plus GJR-GARCH components with Student-t shocks) and runs the same pipeline on it.
+Everything it produces is labelled SIMULATED in files, figures, the API header and the dashboard,
+so it cannot be confused with market results. It exists to test the code: because the true process
+is known, it checks that the GARCH-family models recover what they are built for.
+
+`pytest` runs 97 tests: data validation, each model (including look-ahead checks), evaluation,
+VaR/backtests against hand calculations, the portfolio module (covariance recursion and
+no-look-ahead, Euler components adding up, historical-simulation quantiles, stress P&L), the
+pipeline end to end, the assistant, the API and the dashboard (Streamlit's headless `AppTest`).
+CI runs ruff and pytest on Python 3.11, 3.12 and 3.13, then builds the Docker image and
+smoke-tests the API.
 
 ## Repository layout
 
@@ -228,42 +296,32 @@ src/volvar/
   models/                                     baselines, garch, har, ml (pooled LightGBM)
   forecast.py  evaluation.py                  walk-forward driver, losses, DM tests, regimes
   risk.py  backtest.py                        VaR/ES (normal, FHS), Kupiec/Christoffersen/Basel
+  portfolio.py                                portfolio VaR/ES, Euler attribution, stress tests
   pipeline.py  reporting.py                   end-to-end run and figures
   assistant/                                  store, tools, retriever, grounding, backends, agent
   api.py                                      FastAPI service
 app/dashboard.py                              Streamlit dashboard
 scripts/                                      fetch_data, make_synthetic, run_pipeline,
                                               eval_assistant, update_readme
+.github/workflows/                            ci.yml, refresh.yml (daily real-data run)
 docs/methodology.md  docs/kb/                 specification and the assistant's knowledge base
 eval/assistant_eval.jsonl                     70 evaluation questions (dev / test / stress)
 tests/                                        pytest suite
-results/                                      pipeline outputs (CSV/JSON/figures)
+results/                                      latest real-data outputs (CSV/JSON/figures)
 ```
-
-## Testing
-
-`pytest` runs 86 tests covering data validation, each model (including look-ahead checks),
-evaluation, VaR/backtests (against hand calculations and known-answer cases), the pipeline end to
-end, the assistant (tools, retrieval, grounding, planner, the tool-use loop), the API and the
-dashboard (Streamlit's headless `AppTest`). CI (`.github/workflows/ci.yml`) runs ruff and pytest on
-Python 3.11, 3.12 and 3.13, then builds the Docker image and smoke-tests the API.
 
 ## Limitations
 
-* **Survivorship bias:** the 15 stocks are current large constituents.
+* **Survivorship bias:** the 15 stocks are today's large constituents.
 * **Daily data only:** no intraday volatility, and Garman-Klass ignores overnight gaps.
-* **Per-instrument risk:** VaR is for single stocks, not a portfolio.
-* **Low test power at 99%:** about 19 expected violations per ticker in roughly 1,900 days, so
-  passing a backtest is weak evidence and the tests are noisy.
-* **FHS under-covers slightly at 99%** in these runs (violation rates a little above 1%), a known
-  effect of estimating a 1% quantile from a 500-day window.
-* **Results are one backtest on one universe.** The 16 series share one market, so "16 of 16
-  tickers" is not 16 independent confirmations, and no multiple-comparison correction is applied
-  across the six models. Simulated results (used for CI and development) say nothing about markets.
-* **The assistant's evaluation is small and author-written;** the router is brittle on paraphrases
-  and the live LLM path is untested end to end (see above).
-* **Docker:** the image and workflow are written and their commands were verified in a clean
-  environment, but the image itself was not built in the environment where this was developed.
+* **The book is illustrative:** equal weights, no transaction costs, one-day horizon, no liquidity
+  horizon or FX; the bottom-up model reuses the EWMA correlation rather than a fitted DCC.
+* **Low test power at 99%:** roughly 15-20 expected violations per series over the test window, so
+  a pass is weak evidence and a clear failure is strong evidence.
+* **One market:** the 16 series share one market, so "best on all series" is not 16 independent
+  confirmations, and no multiple-comparison correction is applied across the six models.
+* **The assistant's evaluation is small and author-written**, and the rule-based router handles
+  only about half of naturally worded paraphrases.
 * Risk estimates for education and research; not investment advice.
 
 ## License
