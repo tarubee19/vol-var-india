@@ -315,8 +315,8 @@ Everything it produces is labelled SIMULATED in files, figures, the API header a
 so it cannot be confused with market results. It exists to test the code: because the true process
 is known, it checks that the GARCH-family models recover what they are built for.
 
-`pytest` runs 97 tests: data validation, each model (including look-ahead checks), evaluation,
-VaR/backtests against hand calculations, the portfolio module (covariance recursion and
+`pytest` runs 98 tests: data validation, each model (including look-ahead checks), evaluation,
+VaR/backtests against hand calculations, the data download (partial intraday bars are dropped), the portfolio module (covariance recursion and
 no-look-ahead, Euler components adding up, historical-simulation quantiles, stress P&L), the
 pipeline end to end, the assistant, the API and the dashboard (Streamlit's headless `AppTest`).
 CI runs ruff and pytest on Python 3.11, 3.12 and 3.13, then builds the Docker image and
