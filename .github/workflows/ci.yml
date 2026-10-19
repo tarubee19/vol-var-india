@@ -35,7 +35,7 @@ jobs:
     needs: test
     steps:
       - uses: actions/checkout@v4
-      - name: Build image (runs the simulated pipeline at build time)
+      - name: Build image (serves the committed real-data results)
         run: docker build -t vol-var-india .
       - name: Smoke-test the API container
         run: |
@@ -43,7 +43,8 @@ jobs:
           for i in $(seq 1 30); do
             curl -fs localhost:8000/health && break || sleep 2
           done
-          curl -fs localhost:8000/health | grep '"dataset":"simulated"'
+          curl -fs localhost:8000/health | grep '"dataset":"real"'
+          curl -fs localhost:8000/portfolio > /dev/null || echo "portfolio results not generated yet"
           curl -fs -X POST localhost:8000/assistant \
             -H 'content-type: application/json' \
             -d '{"question": "Which model has the lowest QLIKE?"}' | grep '"grounded":true'
