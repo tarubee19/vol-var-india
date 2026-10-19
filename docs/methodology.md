@@ -97,14 +97,48 @@ A **violation** is `r_t < -VaR_t`.
 At 99% a sample of about 1,350 days holds only about 13 expected violations, so the tests have
 limited power: a pass is weak evidence, a clear failure is strong evidence.
 
-## 6. Assistant
+## 6. Portfolio risk (`src/volvar/portfolio.py`)
+
+The book is a daily-rebalanced **equal-weight portfolio of the 15 stocks** (the Nifty 50 index is
+excluded from the book and used only for betas and comparisons), valued at INR 1 crore. Portfolio
+returns are the weighted sum of daily **simple** returns in percent.
+
+* **Covariance:** RiskMetrics EWMA, `S_t = 0.94 S_{t-1} + 0.06 r_{t-1} r_{t-1}'`, seeded with the
+  sample covariance of the first 60 days. `S_t` uses only returns up to `t-1` (tested).
+* **Models**, all one day ahead and walk-forward:
+  * `hs` - historical simulation on the previous 500 portfolio returns;
+  * `ewma_normal` - `sigma_p = sqrt(w' S_t w)` with a normal quantile;
+  * `ewma_fhs` - the same `sigma_p` with filtered historical simulation (section 4);
+  * `lgbm_fhs` - bottom-up: each stock's LightGBM variance forecast from section 2 combined with
+    the EWMA correlation matrix, `S_t = D_t R_t D_t`, then FHS. This asks whether better
+    single-stock forecasts give a better portfolio VaR.
+* **Backtests** (section 5) at 95%, 97.5% and 99% on the common window where every model has a
+  forecast; 97.5% is the Basel FRTB Expected Shortfall level, so its ES ratio is reported too.
+* **Risk attribution:** Euler allocation of tomorrow's normal VaR,
+  `component_i = w_i (S w)_i / sigma_p`; components add up to the portfolio VaR exactly. The
+  diversification benefit is `1 - VaR_p / sum_i VaR_i(stand-alone)`.
+* **Stress tests:** dated historical windows (Brexit result, demonetisation, the IL&FS/NBFC credit
+  scare, the COVID-19 crash, Russia's invasion of Ukraine, the 2024 election results day, the
+  August 2024 global sell-off) replayed on today's weights, with the Nifty 50 move and the number
+  of 99% VaR breaches in each window; plus instantaneous hypothetical shocks: Nifty 50 -10% mapped
+  through each stock's 250-day beta, banks -15%, IT services -12%. Historical scenarios are run on
+  real data only.
+
+## 7. Daily refresh
+
+`.github/workflows/refresh.yml` runs every weekday at 12:45 UTC (18:15 IST, after the NSE close):
+it downloads prices with `scripts/fetch_data.py`, re-runs the whole walk-forward study, re-scores
+the assistant, rewrites the README blocks with `scripts/update_readme.py` and commits the changed
+files in `results/`. Figures are re-rendered on Fridays and on manual runs to keep the history small.
+
+## 8. Assistant
 
 See the README. In short: six tools read the files in `results/` and one searches the knowledge base; a BM25 index over `docs/kb`
 supports definitions; every number in an answer must match tool output or the question
 (`assistant/grounding.py`); and the question set in `eval/assistant_eval.jsonl` is scored by
 `scripts/eval_assistant.py`.
 
-## 7. Reproducibility
+## 9. Reproducibility
 
 * All randomness is seeded (`ExperimentConfig.seed`, simulator seed).
 * `results/meta.json` records the configuration and library versions.
