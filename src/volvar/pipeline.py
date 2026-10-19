@@ -33,6 +33,7 @@ from volvar.evaluation import (
     per_ticker_losses,
 )
 from volvar.forecast import ForecastResult, next_day_variances, run_forecasts
+from volvar.portfolio import run_portfolio_study, stock_tickers
 from volvar.risk import var_es
 
 METHODS = ("fhs", "normal")
@@ -245,6 +246,27 @@ def run_pipeline(
     next_var_risk.to_csv(results_dir / "next_day_var.csv", index=False)
     log("next-day forecasts done")
 
+    portfolio = None
+    if len(stock_tickers(panels)) >= 2:
+        portfolio = run_portfolio_study(
+            panels,
+            result.forecasts,
+            next_var,
+            oos_start=oos_start,
+            label=label,
+            lam=cfg.ewma_lambda,
+            fhs_window=cfg.fhs_window,
+            fhs_min_obs=cfg.fhs_min_obs,
+        )
+        portfolio.backtest.to_csv(results_dir / "portfolio_backtest.csv", index=False)
+        portfolio.next_day.to_csv(results_dir / "portfolio_next_day.csv", index=False)
+        portfolio.contributions.to_csv(results_dir / "portfolio_contributions.csv")
+        portfolio.stress.to_csv(results_dir / "stress_tests.csv", index=False)
+        portfolio.returns.rename("ret").rename_axis("date").to_frame().to_parquet(
+            results_dir / "portfolio_returns.parquet"
+        )
+        log(f"portfolio study done ({len(portfolio.backtest)} backtests, {len(portfolio.stress)} stress rows)")
+
     best = lt["qlike"].idxmin()
     fhs99 = var_sum[(var_sum["method"] == "fhs") & (np.isclose(var_sum["level"], 0.99))].set_index("model")
     summary = {
@@ -264,6 +286,8 @@ def run_pipeline(
         "var_fhs99_violation_rate": fhs99["mean_violation_rate"].to_dict(),
         "garch_failed_fits": result.garch_failed_fits,
     }
+    if portfolio is not None:
+        summary["portfolio"] = portfolio.summary
     (results_dir / "summary.json").write_text(json.dumps(_json_safe(summary), indent=2))
 
     meta = {
@@ -288,7 +312,7 @@ def run_pipeline(
     if figures:
         from volvar.reporting import make_figures
 
-        make_figures(results_dir, result, panels, var_series, cfg, label)
+        make_figures(results_dir, result, panels, var_series, cfg, label, portfolio=portfolio)
         log("figures written")
 
     log("pipeline complete")

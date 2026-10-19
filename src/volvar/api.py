@@ -11,12 +11,14 @@ internet as is.
 
 from __future__ import annotations
 
+import json
 import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Literal
 
+import pandas as pd
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -172,6 +174,30 @@ def create_app(
     def models(request: Request, metric: Literal["qlike", "mse"] = "qlike"):
         """Out-of-sample accuracy of every volatility model, with Diebold-Mariano vs EWMA."""
         return call(request, "compare_models", metric=metric)
+
+    @app.get("/portfolio", tags=["portfolio"])
+    def portfolio(request: Request):
+        """Equal-weight book: next-day VaR/ES (percent and INR on 1 crore), backtests,
+        Euler risk contributions and stress tests."""
+        store = assistant_of(request).store
+        d = store.results_dir
+        if not (d / "portfolio_backtest.csv").exists():
+            raise HTTPException(404, "No portfolio results; re-run the pipeline.")
+
+        def records(name: str) -> list[dict[str, Any]]:
+            path = d / name
+            if not path.exists():
+                return []
+            return json.loads(pd.read_csv(path).to_json(orient="records"))
+
+        return {
+            "dataset": store.dataset,
+            "notional_inr": 1e7,
+            "next_day": records("portfolio_next_day.csv"),
+            "backtest": records("portfolio_backtest.csv"),
+            "contributions": records("portfolio_contributions.csv"),
+            "stress_tests": records("stress_tests.csv"),
+        }
 
     @app.post("/assistant", response_model=AskResponse, tags=["assistant"])
     def ask(request: Request, body: AskRequest):

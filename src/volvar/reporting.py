@@ -224,7 +224,49 @@ def fig_violation_heatmap(results_dir: Path, label: str, level: float = 0.99, me
     _save(fig, results_dir / "figures" / "fig_violation_heatmap.png")
 
 
-def make_figures(results_dir, result, panels, var_series, cfg, label: str) -> None:
+PORTFOLIO_COLOR = "#2a78d6"
+
+
+def fig_portfolio_var(results_dir: Path, port: pd.Series, var: pd.Series, level: float, label: str,
+                      model_label: str, last_n: int = 2500) -> None:
+    """Equal-weight book: daily return against its one-day VaR, breaches marked."""
+    v = var.loc[: port.index[-1]].dropna().tail(last_n)
+    r = port.reindex(v.index)
+    breach = r < -v
+    fig, ax = plt.subplots(figsize=(10, 4.2))
+    ax.plot(r.index, r, color=AXIS, linewidth=0.8, label="Portfolio daily return")
+    ax.plot(v.index, -v, color=PORTFOLIO_COLOR, linewidth=1.8,
+            label=f"-{level * 100:g}% VaR ({model_label})")
+    ax.scatter(r.index[breach], r[breach], marker="x", s=36, color=CRITICAL, linewidths=1.6, zorder=3,
+               label=f"VaR breach ({int(breach.sum())} of {len(v)} days; expected {(1 - level) * len(v):.1f})")
+    ax.axhline(0, color=AXIS, linewidth=1)
+    ax.set_ylabel("Return (%)")
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=1, fontsize=9)
+    _title(ax, f"Equal-weight portfolio: {level * 100:g}% one-day VaR and breaches",
+           f"Last {len(v)} out-of-sample days, walk-forward, no look-ahead", label)
+    _save(fig, results_dir / "figures" / "fig_portfolio_var.png")
+
+
+def fig_risk_contrib(results_dir: Path, contrib: pd.DataFrame, label: str) -> None:
+    """Share of the portfolio's 99% VaR contributed by each position (Euler allocation)."""
+    c = contrib.sort_values("pct_of_portfolio_var")
+    fig, ax = plt.subplots(figsize=(8.5, 0.32 * len(c) + 1.8))
+    ax.barh(c.index, 100 * c["pct_of_portfolio_var"], color=PORTFOLIO_COLOR, height=0.6,
+            edgecolor=SURFACE, linewidth=1.5)
+    w = 100 * float(c["weight"].iloc[0])
+    ax.axvline(w, color=INK_2, linewidth=1, linestyle="--")
+    ax.text(w, len(c) - 0.4, f" weight {w:.1f}%", color=INK_2, fontsize=8, va="bottom")
+    for i, (_, row) in enumerate(c.iterrows()):
+        ax.text(100 * row["pct_of_portfolio_var"] + 0.15, i, f"{100 * row['pct_of_portfolio_var']:.1f}%",
+                va="center", fontsize=8, color=INK_2)
+    ax.set_xlabel("Share of portfolio 99% VaR (%)")
+    ax.grid(axis="y", visible=False)
+    _title(ax, "Which positions drive tomorrow's portfolio risk?",
+           "Euler allocation of the EWMA-covariance VaR; equal weights, so risk is not equal", label)
+    _save(fig, results_dir / "figures" / "fig_risk_contrib.png")
+
+
+def make_figures(results_dir, result, panels, var_series, cfg, label: str, portfolio=None) -> None:
     """Render every README figure into ``results_dir/figures``."""
     results_dir = Path(results_dir)
     (results_dir / "figures").mkdir(parents=True, exist_ok=True)
@@ -243,3 +285,11 @@ def make_figures(results_dir, result, panels, var_series, cfg, label: str) -> No
     if key in var_series:
         fig_var_backtest(results_dir, panels[ticker]["ret"], var_series[key][0], ticker, best, 0.99, label)
     fig_violation_heatmap(results_dir, label)
+    if portfolio is not None:
+        from volvar.portfolio import PORTFOLIO_LABELS
+
+        key = ("ewma_fhs", 0.99)
+        if key in portfolio.var_series:
+            fig_portfolio_var(results_dir, portfolio.returns, portfolio.var_series[key][0], 0.99, label,
+                              PORTFOLIO_LABELS["ewma_fhs"])
+        fig_risk_contrib(results_dir, portfolio.contributions, label)
