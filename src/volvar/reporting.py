@@ -228,9 +228,11 @@ PORTFOLIO_COLOR = "#2a78d6"
 
 
 def fig_portfolio_var(results_dir: Path, port: pd.Series, var: pd.Series, level: float, label: str,
-                      model_label: str, last_n: int = 2500) -> None:
-    """Equal-weight book: daily return against its one-day VaR, breaches marked."""
-    v = var.loc[: port.index[-1]].dropna().tail(last_n)
+                      model_label: str, start=None) -> None:
+    """Equal-weight book: daily return against its one-day VaR over the backtest window."""
+    v = var.loc[: port.index[-1]].dropna()
+    if start is not None:
+        v = v.loc[pd.Timestamp(start):]
     r = port.reindex(v.index)
     breach = r < -v
     fig, ax = plt.subplots(figsize=(10, 4.2))
@@ -243,7 +245,8 @@ def fig_portfolio_var(results_dir: Path, port: pd.Series, var: pd.Series, level:
     ax.set_ylabel("Return (%)")
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=1, fontsize=9)
     _title(ax, f"Equal-weight portfolio: {level * 100:g}% one-day VaR and breaches",
-           f"Last {len(v)} out-of-sample days, walk-forward, no look-ahead", label)
+           f"Backtest window {v.index[0]:%b %Y} to {v.index[-1]:%b %Y} ({len(v)} days), walk-forward, "
+           "no look-ahead", label)
     _save(fig, results_dir / "figures" / "fig_portfolio_var.png")
 
 
@@ -291,5 +294,5 @@ def make_figures(results_dir, result, panels, var_series, cfg, label: str, portf
         key = ("ewma_fhs", 0.99)
         if key in portfolio.var_series:
             fig_portfolio_var(results_dir, portfolio.returns, portfolio.var_series[key][0], 0.99, label,
-                              PORTFOLIO_LABELS["ewma_fhs"])
+                              PORTFOLIO_LABELS["ewma_fhs"], start=portfolio.summary.get("oos_start"))
         fig_risk_contrib(results_dir, portfolio.contributions, label)
