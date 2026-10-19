@@ -138,8 +138,8 @@ with st.sidebar:
     )
     st.caption(f"Results folder: `{results_dir}`")
 
-tab_models, tab_fc, tab_bt, tab_ai = st.tabs(
-    ["Model comparison", "Next-day forecast", "VaR backtest", "Ask the assistant"]
+tab_models, tab_fc, tab_bt, tab_port, tab_ai = st.tabs(
+    ["Model comparison", "Next-day forecast", "VaR backtest", "Portfolio risk", "Ask the assistant"]
 )
 
 # -- model comparison ------------------------------------------------------------------------
@@ -319,6 +319,56 @@ with tab_bt:
         hide_index=True,
         width="stretch",
     )
+
+# -- portfolio risk --------------------------------------------------------------------------
+with tab_port:
+    pdir = Path(results_dir)
+    if not (pdir / "portfolio_backtest.csv").exists():
+        st.info(
+            "Portfolio results are not in this results folder. Re-run "
+            "`python scripts/run_pipeline.py` to add them.",
+            icon=":material/info:",
+        )
+    else:
+        p_next = pd.read_csv(pdir / "portfolio_next_day.csv")
+        p_bt = pd.read_csv(pdir / "portfolio_backtest.csv")
+        p_contrib = pd.read_csv(pdir / "portfolio_contributions.csv")
+        stress_path = pdir / "stress_tests.csv"
+        p_stress = pd.read_csv(stress_path) if stress_path.exists() else pd.DataFrame()
+        st.subheader(f"Equal-weight book of {len(p_contrib)} stocks, notional INR 1 crore")
+        sel = p_next[(p_next.model == "ewma_fhs") & ((p_next.level - level).abs() < 1e-9)]
+        if len(sel):
+            r = sel.iloc[0]
+            c1, c2, c3 = st.columns(3)
+            c1.metric(f"Portfolio {level:.0%} VaR", f"{r.var_pct:.2f}%",
+                      help="EWMA covariance with filtered historical simulation, next trading day")
+            c2.metric("Portfolio Expected Shortfall", f"{r.es_pct:.2f}%")
+            c3.metric("VaR in rupees", f"INR {r.var_inr:,.0f}")
+            st.caption(f"Forecast for {r.target_date}, using data up to {r.as_of}.")
+        st.markdown("**Which positions drive the risk?** Share of the 99% VaR (Euler allocation).")
+        c = p_contrib.sort_values("pct_of_portfolio_var")
+        fig = go.Figure(
+            go.Bar(
+                x=100 * c.pct_of_portfolio_var,
+                y=c.ticker,
+                orientation="h",
+                marker_color=COLORS["hist"],
+                hovertemplate="%{y}: %{x:.1f}% of portfolio VaR<extra></extra>",
+            )
+        )
+        fig.add_vline(x=100 * float(c.weight.iloc[0]), line_dash="dash", line_color=MUTED)
+        fig.update_layout(showlegend=False, hovermode="closest")
+        fig_layout(fig, 28 * len(c) + 60)
+        fig.update_xaxes(title="Share of portfolio 99% VaR (%)")
+        st.plotly_chart(fig, width="stretch")
+        st.markdown(f"**Backtests of the portfolio VaR at {level:.0%}**")
+        bt_view = p_bt[(p_bt.level - level).abs() < 1e-9][
+            ["label", "n", "violations", "violation_rate", "kupiec_p", "cc_p", "basel_zone", "es_ratio", "passes"]
+        ]
+        st.dataframe(bt_view, hide_index=True, width="stretch")
+        if len(p_stress):
+            st.markdown("**Stress tests on today's book** (P&L on INR 1 crore)")
+            st.dataframe(p_stress, hide_index=True, width="stretch")
 
 # -- assistant ---------------------------------------------------------------------------------
 with tab_ai:
