@@ -72,12 +72,31 @@ def fetch_one(symbol: str, start: str, end: str | None, retries: int = 3) -> pd.
     raise RuntimeError(f"Could not download {symbol}: {last_err}")
 
 
+def drop_incomplete_session(
+    df: pd.DataFrame, now: pd.Timestamp | None = None, settle: str = "16:00"
+) -> pd.DataFrame:
+    """Drop today's bar if the download runs before the NSE session has closed and settled.
+
+    Yahoo serves a live, partial bar for the current day during market hours (NSE closes at
+    15:30 IST). Using it would mix an intraday price into a daily study, so it is removed unless
+    the run happens after ``settle`` India time.
+    """
+    now = now if now is not None else pd.Timestamp.now(tz="Asia/Kolkata")
+    if now.tzinfo is not None:
+        now = now.tz_convert("Asia/Kolkata").tz_localize(None)
+    if len(df) and df.index[-1] == now.normalize() and now.time() < pd.Timestamp(settle).time():
+        return df.iloc[:-1]
+    return df
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", default="data/raw", help="output directory")
     parser.add_argument("--start", default="2015-01-01")
     parser.add_argument("--end", default=None, help="exclusive end date (default: today)")
     parser.add_argument("--symbols", nargs="*", default=DEFAULT_SYMBOLS)
+    parser.add_argument("--keep-incomplete", action="store_true",
+                        help="keep today's bar even if the market has not closed yet")
     args = parser.parse_args(argv)
 
     out = Path(args.out)
@@ -88,6 +107,8 @@ def main(argv: list[str] | None = None) -> int:
         name = clean_name(sym)
         try:
             df = fetch_one(sym, args.start, args.end)
+            if not args.keep_incomplete:
+                df = drop_incomplete_session(df)
         except RuntimeError as exc:
             print(f"[FAIL] {sym}: {exc}")
             failed.append(sym)
