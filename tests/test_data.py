@@ -85,3 +85,28 @@ def test_make_panel_columns(small_universe):
     assert {"ret", "r2", "gk", "volume"} <= set(panel.columns)
     np.testing.assert_allclose(panel["r2"], panel["ret"] ** 2)
     assert not panel[["ret", "gk"]].isna().any().any()
+
+
+def _fetch_module():
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "scripts" / "fetch_data.py"
+    spec = importlib.util.spec_from_file_location("fetch_data", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_partial_intraday_bar_is_dropped():
+    import pandas as pd
+
+    fetch = _fetch_module()
+    idx = pd.to_datetime(["2026-10-15", "2026-10-16", "2026-10-19"])
+    df = pd.DataFrame({"Close": [1.0, 2.0, 3.0]}, index=idx)
+    during = pd.Timestamp("2026-10-19 13:18", tz="Asia/Kolkata")
+    after = pd.Timestamp("2026-10-19 18:15", tz="Asia/Kolkata")
+    assert fetch.drop_incomplete_session(df, now=during).index[-1] == pd.Timestamp("2026-10-16")
+    assert len(fetch.drop_incomplete_session(df, now=after)) == 3
+    next_day = pd.Timestamp("2026-10-20 09:00", tz="Asia/Kolkata")
+    assert len(fetch.drop_incomplete_session(df, now=next_day)) == 3
