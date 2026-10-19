@@ -26,10 +26,12 @@ def test_dashboard_renders_with_simulated_banner(pipeline_run, monkeypatch):
         "Model comparison",
         "Next-day forecast",
         "VaR backtest",
+        "Portfolio risk",
         "Ask the assistant",
     ]
     labels = {m.label for m in at.metric}
     assert {"Volatility (daily)", "Violations", "Kupiec p-value"} <= labels
+    assert {"Portfolio 99% VaR", "VaR in rupees"} <= labels
 
 
 def test_dashboard_selection_and_chat(pipeline_run, monkeypatch):
