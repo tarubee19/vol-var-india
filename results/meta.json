@@ -19,10 +19,10 @@
     "TCS"
   ],
   "data_start": "2015-01-02",
-  "data_end": "2026-10-16",
+  "data_end": "2026-10-19",
   "oos_start": "2019-01-22",
-  "oos_end": "2026-10-16",
-  "next_day_target": "2026-10-19",
+  "oos_end": "2026-10-19",
+  "next_day_target": "2026-10-20",
   "config": {
     "min_train": 1000,
     "refit_every": 63,
@@ -62,5 +62,5 @@
     "numpy": "2.5.4",
     "pandas": "3.0.6"
   },
-  "runtime_seconds": 38.6
+  "runtime_seconds": 57.8
 }
