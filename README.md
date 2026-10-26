@@ -42,22 +42,22 @@ Forecasts for **2026-10-26**, using closing prices up to 2026-10-23. Rebuilt eve
 
 | Ticker | Daily vol | Annualised vol | 99% VaR | 99% ES |
 |---|---|---|---|---|
-| INFY | 3.64% | 57.7% | 11.50% | 13.68% |
-| TCS | 2.38% | 37.8% | 6.82% | 8.63% |
-| BHARTIARTL | 1.88% | 29.8% | 5.42% | 6.05% |
-| AXISBANK | 1.66% | 26.4% | 4.85% | 6.85% |
-| HINDUNILVR | 1.70% | 27.0% | 4.61% | 7.26% |
-| KOTAKBANK | 1.64% | 26.0% | 4.38% | 6.32% |
-| RELIANCE | 1.80% | 28.6% | 4.25% | 5.61% |
-| MARUTI | 1.59% | 25.2% | 4.23% | 5.14% |
-| LT | 1.36% | 21.6% | 3.84% | 4.57% |
-| ASIANPAINT | 1.50% | 23.8% | 3.78% | 5.20% |
-| HDFCBANK | 1.49% | 23.6% | 3.70% | 4.93% |
-| ITC | 1.75% | 27.8% | 3.43% | 9.26% |
-| SBIN | 1.50% | 23.8% | 3.36% | 4.61% |
-| SUNPHARMA | 1.27% | 20.1% | 3.18% | 3.84% |
-| ICICIBANK | 1.30% | 20.6% | 3.07% | 3.62% |
-| NIFTY50 | 1.11% | 17.6% | 2.97% | 3.43% |
+| INFY | 3.61% | 57.2% | 11.31% | 13.50% |
+| TCS | 2.38% | 37.7% | 6.81% | 8.56% |
+| BHARTIARTL | 1.84% | 29.3% | 5.30% | 5.99% |
+| AXISBANK | 1.70% | 27.0% | 4.99% | 7.00% |
+| HINDUNILVR | 1.68% | 26.7% | 4.51% | 7.23% |
+| KOTAKBANK | 1.62% | 25.8% | 4.35% | 6.25% |
+| MARUTI | 1.58% | 25.1% | 4.21% | 5.12% |
+| RELIANCE | 1.76% | 27.9% | 4.17% | 5.51% |
+| LT | 1.33% | 21.2% | 3.77% | 4.51% |
+| ASIANPAINT | 1.48% | 23.5% | 3.73% | 5.13% |
+| HDFCBANK | 1.49% | 23.6% | 3.69% | 4.93% |
+| ITC | 1.77% | 28.2% | 3.45% | 9.47% |
+| SBIN | 1.49% | 23.6% | 3.32% | 4.63% |
+| SUNPHARMA | 1.25% | 19.8% | 3.12% | 3.76% |
+| ICICIBANK | 1.29% | 20.5% | 3.01% | 3.59% |
+| NIFTY50 | 1.12% | 17.8% | 2.99% | 3.46% |
 
 </details>
 <!-- SNAPSHOT:END -->
@@ -138,8 +138,8 @@ docker compose up --build   # API :8000, dashboard :8501, serving the committed 
 
 | Model | QLIKE | Gain vs EWMA | DM p-value | MSE | Tickers won |
 |---|---|---|---|---|---|
-| LightGBM (pooled) | 1.7690 | +0.0754 | <0.001 | 115.85 | 16 of 16 |
-| GJR-GARCH(1,1,1)-t | 1.8180 | +0.0265 | 0.017 | 119.54 | 0 of 16 |
+| LightGBM (pooled) | 1.7693 | +0.0751 | <0.001 | 115.86 | 16 of 16 |
+| GJR-GARCH(1,1,1)-t | 1.8208 | +0.0237 | 0.041 | 119.63 | 0 of 16 |
 | GARCH(1,1)-t | 1.8238 | +0.0207 | 0.108 | 121.16 | 0 of 16 |
 | EWMA (lambda=0.94) | 1.8445 | benchmark | - | 121.09 | 0 of 16 |
 | HAR (Garman-Klass) | 1.9040 | -0.0595 | 0.025 | 118.48 | 0 of 16 |
@@ -151,9 +151,9 @@ Lowest QLIKE: LightGBM (pooled). Significantly better than EWMA at the 5% level:
 
 | Regime | Historical (250d) | EWMA (lambda=0.94) | GARCH(1,1)-t | GJR-GARCH(1,1,1)-t | HAR (Garman-Klass) | LightGBM (pooled) |
 |---|---|---|---|---|---|---|
-| Calm | 1.4349 | 1.4664 | 1.4210 | 1.4231 | 1.4757 | 1.3866 |
-| Normal | 1.7882 | 1.7803 | 1.7494 | 1.7519 | 1.7936 | 1.7169 |
-| Turbulent | 2.5805 | 2.3055 | 2.3208 | 2.2986 | 2.4621 | 2.2232 |
+| Calm | 1.4349 | 1.4664 | 1.4210 | 1.4231 | 1.4757 | 1.3867 |
+| Normal | 1.7882 | 1.7803 | 1.7494 | 1.7519 | 1.7936 | 1.7174 |
+| Turbulent | 2.5805 | 2.3055 | 2.3208 | 2.3073 | 2.4621 | 2.2234 |
 
 Lowest QLIKE per regime - calm: LightGBM (pooled); normal: LightGBM (pooled); turbulent: LightGBM (pooled).
 
@@ -161,12 +161,12 @@ Lowest QLIKE per regime - calm: LightGBM (pooled); normal: LightGBM (pooled); tu
 
 | model | qlike | mse | n |
 |---|---|---|---|
-| hist | 5.1571 | 2008.5553 | 1424 |
-| ewma | 3.7617 | 1878.5725 | 1424 |
-| garch | 3.9504 | 1887.7877 | 1424 |
-| gjr | 3.7931 | 1849.7943 | 1424 |
-| har | 4.37 | 1828.2352 | 1424 |
-| lgbm | 3.5244 | 1782.2548 | 1424 |
+| hist | 5.1571 | 2008.5558 | 1424 |
+| ewma | 3.7617 | 1878.573 | 1424 |
+| garch | 3.9504 | 1887.7874 | 1424 |
+| gjr | 3.8545 | 1851.6456 | 1424 |
+| har | 4.37 | 1828.2356 | 1424 |
+| lgbm | 3.5257 | 1782.8472 | 1424 |
 **Value-at-Risk backtests** - mean one-day violation rate across 16 tickers, the share of tickers passing the conditional-coverage test at the 5% level, and the mean ES ratio (realised / predicted Expected Shortfall on violation days; 1 is ideal). FHS = filtered historical simulation.
 
 99% level (expected violation rate 1.00%):
@@ -176,9 +176,9 @@ Lowest QLIKE per regime - calm: LightGBM (pooled); normal: LightGBM (pooled); tu
 | Historical (250d) | 1.31% | 75% | 1.04 | 1.73% | 19% | 1.34 |
 | EWMA (lambda=0.94) | 1.28% | 100% | 1.00 | 1.83% | 12% | 1.25 |
 | GARCH(1,1)-t | 1.25% | 100% | 1.00 | 1.56% | 38% | 1.24 |
-| GJR-GARCH(1,1,1)-t | 1.27% | 100% | 1.00 | 1.52% | 50% | 1.23 |
+| GJR-GARCH(1,1,1)-t | 1.28% | 100% | 1.00 | 1.53% | 50% | 1.23 |
 | HAR (Garman-Klass) | 1.27% | 75% | 1.02 | 1.85% | 56% | 1.24 |
-| LightGBM (pooled) | 1.27% | 100% | 1.00 | 1.58% | 44% | 1.20 |
+| LightGBM (pooled) | 1.28% | 94% | 0.99 | 1.60% | 44% | 1.20 |
 
 95% level (expected violation rate 5.00%):
 
@@ -187,9 +187,9 @@ Lowest QLIKE per regime - calm: LightGBM (pooled); normal: LightGBM (pooled); tu
 | Historical (250d) | 5.46% | 56% | 1.01 | 4.16% | 38% | 1.27 |
 | EWMA (lambda=0.94) | 5.34% | 94% | 1.01 | 4.90% | 88% | 1.19 |
 | GARCH(1,1)-t | 5.20% | 81% | 1.01 | 3.98% | 38% | 1.20 |
-| GJR-GARCH(1,1,1)-t | 5.16% | 94% | 1.01 | 3.93% | 38% | 1.19 |
+| GJR-GARCH(1,1,1)-t | 5.16% | 94% | 1.00 | 3.93% | 38% | 1.19 |
 | HAR (Garman-Klass) | 5.44% | 88% | 0.99 | 4.56% | 31% | 1.20 |
-| LightGBM (pooled) | 5.31% | 94% | 1.00 | 4.50% | 88% | 1.15 |
+| LightGBM (pooled) | 5.28% | 94% | 1.00 | 4.48% | 88% | 1.15 |
 
 **Portfolio VaR backtests** - a daily-rebalanced equal-weight book of 15 stocks, 1,665 common out-of-sample days (2020-01-31 to 2026-10-23). The 99% VaR should be breached on 1% of days; ES ratio = realised / predicted shortfall on breach days (1 is ideal); 97.5% is the Basel FRTB Expected Shortfall level.
 
@@ -198,7 +198,7 @@ Lowest QLIKE per regime - calm: LightGBM (pooled); normal: LightGBM (pooled); tu
 | Historical simulation (500d) | 22 of 1665 (1.32%) | 0.209 | 0.338 | yellow | 1.05 | 1.02 | yes |
 | EWMA covariance, normal | 33 of 1665 (1.98%) | 0.000 | 0.001 | yellow | 1.25 | 1.28 | no |
 | EWMA covariance, FHS | 24 of 1665 (1.44%) | 0.089 | 0.166 | green | 1.03 | 1.08 | yes |
-| LightGBM vols + EWMA correlation, FHS | 22 of 1665 (1.32%) | 0.209 | 0.338 | green | 1.02 | 1.05 | yes |
+| LightGBM vols + EWMA correlation, FHS | 22 of 1665 (1.32%) | 0.209 | 0.338 | green | 1.02 | 1.06 | yes |
 
 **Risk attribution** (Euler allocation of tomorrow's 99% VaR). Each stock is 6.7% of the book, but the top three risk contributors are TCS 10.4%, ITC 8.7%, INFY 8.0%. Diversification cuts the VaR by 42% against the sum of stand-alone position VaRs.
 
