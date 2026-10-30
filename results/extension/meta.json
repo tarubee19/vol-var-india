@@ -1,0 +1,7 @@
+{
+  "oos_start": "2019-01-22",
+  "oos_end": "2026-10-30",
+  "n_forecasts": 30711,
+  "split_for_sensitivity": "2022-12-11",
+  "runtime_s": 346.7912256717682
+}

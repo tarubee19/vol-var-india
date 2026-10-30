@@ -251,7 +251,61 @@ It runs on fresh prices in GitHub Actions (`.github/workflows/extension-study.ym
 `results/extension/` and refreshes the tables below with `scripts/render_extension.py`.
 
 <!-- EXTENSION:START -->
-_Pending: filled in automatically by the extension-study workflow._
+**All models on the same out-of-sample forecasts** (QLIKE, lower is better; Model Confidence Set of Hansen, Lunde and Nason 2011 at 90%, stationary bootstrap, 2,000 replications):
+
+| Model | QLIKE | Gain vs EWMA | MCS p-value | In 90% MCS |
+|---|---|---|---|---|
+| Random forest | 1.7667 | +4.18% | 1.000 | **yes** |
+| LightGBM (pooled, shipped) | 1.7673 | +4.15% | 0.825 | **yes** |
+| XGBoost | 1.7683 | +4.09% | 0.757 | **yes** |
+| Ridge, same features | 1.7826 | +3.32% | 0.050 | no |
+| MLP (32-16) | 1.7886 | +3.00% | 0.005 | no |
+| LightGBM on log target | 1.7996 | +2.40% | 0.009 | no |
+| Ridge, log features + log target (HAR-X style) | 1.8176 | +1.42% | 0.000 | no |
+| GJR-GARCH(1,1,1)-t | 1.8202 | +1.28% | 0.004 | no |
+| GARCH(1,1)-t | 1.8232 | +1.12% | 0.006 | no |
+| EWMA (benchmark) | 1.8438 | +0.00% | 0.000 | no |
+| EGARCH(1,1)-t | 1.8493 | -0.30% | 0.006 | no |
+| HAR (Garman-Klass) | 1.9032 | -3.22% | 0.005 | no |
+| Historical (250d) | 1.9263 | -4.47% | 0.050 | no |
+
+**LightGBM sensitivity** (settings ranked on the first half of the out-of-sample period, checked on the second):
+
+| LightGBM setting | QLIKE, 1st half (selection) | QLIKE, 2nd half (check) |
+|---|---|---|
+| shipped (leaves 8, 200 x 0.03, min_child 200, lambda 10) | 2.0636 | 1.4711 |
+| num_leaves 4 | 2.0604 | 1.4728 |
+| num_leaves 32 | 2.0859 | 1.4801 |
+| num_leaves 128, min_child 20 | 2.1090 | 1.4987 |
+| 100 rounds | 2.0663 | 1.4760 |
+| 500 rounds | 2.0789 | 1.4760 |
+| learning_rate 0.1 | 2.0986 | 1.4864 |
+| min_child_samples 50 | 2.0671 | 1.4702 |
+| min_child_samples 1000 | 2.0622 | 1.4754 |
+| reg_lambda 0 | 2.0652 | 1.4707 |
+
+**What the model uses:** drop-a-feature-group ablation (re-trained walk-forward) and average gain share:
+
+| Feature group removed | QLIKE | Change |
+|---|---|---|
+| none | 1.7673 | +0.00% |
+| own squared returns | 1.7693 | +0.12% |
+| Garman-Klass range | 1.7944 | +1.54% |
+| signed returns (leverage) | 1.7732 | +0.33% |
+| market | 1.7652 | -0.12% |
+| volume | 1.7707 | +0.19% |
+| level + weekday | 1.7814 | +0.80% |
+
+| Feature | Share of gain |
+|---|---|
+| f_gk_1 | 17.4% |
+| f_gk_5 | 16.9% |
+| f_mkt_r2_1 | 11.0% |
+| f_logbase | 9.1% |
+| f_ret_5 | 7.5% |
+| f_dow | 6.9% |
+| f_r2_66 | 6.3% |
+| f_vol | 6.2% |
 <!-- EXTENSION:END -->
 
 ## Figures
