@@ -232,6 +232,28 @@ Lowest QLIKE per regime - calm: LightGBM (pooled); normal: LightGBM (pooled); tu
 Caveats. The test split was written by the same author as the router, so its 100% tool-selection score is optimistic; the stress split (naturally worded paraphrases, never tuned against) is the honest number. One test question exposed a missing term in a methodology note (look-ahead bias) that was added afterwards, so test retrieval is slightly optimistic too. At the abstention threshold chosen on the dev split (0.6), 2 of 16 valid in-scope test questions are wrongly declined.
 <!-- RESULTS:END -->
 
+## Extension study: is LightGBM really the best, and why?
+
+The headline comparison tests each model against EWMA, one pair at a time. `scripts/model_extension_study.py` asks
+the harder questions, using **the same features, ratio-to-EWMA target, quarterly walk-forward refits and
+out-of-sample dates** for every learner:
+
+* **More learners:** XGBoost, random forest, an MLP, ridge on the same features (is the gain just a better linear
+  combination?), a HAR-X style log-linear model, LightGBM on a log target, and EGARCH(1,1)-t.
+* **Model Confidence Set:** which models *cannot be statistically distinguished from the best*. Pairwise DM tests
+  against one benchmark cannot answer that.
+* **Hyperparameter sensitivity**, honestly: settings are ranked on the first half of the out-of-sample period and
+  checked on the second half.
+* **Feature attribution:** drop each feature group (own squared returns, Garman-Klass range, signed returns /
+  leverage, market, volume, level + weekday) and re-run the walk-forward, plus gain importance.
+
+It runs on fresh prices in GitHub Actions (`.github/workflows/extension-study.yml`). That workflow commits
+`results/extension/` and refreshes the tables below with `scripts/render_extension.py`.
+
+<!-- EXTENSION:START -->
+_Pending: filled in automatically by the extension-study workflow._
+<!-- EXTENSION:END -->
+
 ## Figures
 
 Rendered by `scripts/run_pipeline.py` into `results/figures/` from the real-data run.
