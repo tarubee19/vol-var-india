@@ -308,6 +308,16 @@ It runs on fresh prices in GitHub Actions (`.github/workflows/extension-study.ym
 | f_vol | 6.2% |
 <!-- EXTENSION:END -->
 
+**How to read the extension study**
+
+* *Is LightGBM the right model?* It is one of three statistically tied winners. Random forest, LightGBM and XGBoost all stay in the 90% Model Confidence Set and are 0.001 QLIKE apart. LightGBM stays the shipped model because it is the fastest of the three to refit every 63 days, not because it is uniquely best.
+* *Where does the gain come from?* Mostly from the features. Ridge on the same features already gains +3.32% over EWMA, about 80% of LightGBM's +4.15%. The trees add the last ~0.8 points through non-linear interactions, and the MCS rejects ridge at 90% (p = 0.05), so that last step is real but small.
+* *Why not GARCH?* GJR-GARCH and GARCH-t beat EWMA by only 1.1-1.3%, and all three GARCH variants are rejected by the MCS. Asymmetry helps (GJR beats plain GARCH), but EGARCH does worse than EWMA here.
+* *Log target is worse.* Training on log squared returns gives up 1.8 points. Models fitted on a log scale predict something like the median, so they under-forecast variance, and QLIKE penalises that.
+* *Which inputs matter?* The intraday range (Garman-Klass) does: dropping it costs +1.54% QLIKE. The market (Nifty) features take 11% of the split gain, yet dropping them slightly *improves* QLIKE (-0.12%). They are redundant with the stock's own range, a reminder that gain share is not the same as usefulness. They are kept for now because the improvement is within noise. A natural next step would be removing them after a DM test.
+* *Are the hyper-parameters cherry-picked?* No. The settings were ranked on the first half of the out-of-sample period only, and on the second half the shipped setting (1.4711) is within 0.001 of the best alternative (1.4702). Bigger trees (128 leaves) and faster learning rates overfit and lose on both halves, which is why a small, heavily regularised model was chosen.
+
+
 ## Figures
 
 Rendered by `scripts/run_pipeline.py` into `results/figures/` from the real-data run.
