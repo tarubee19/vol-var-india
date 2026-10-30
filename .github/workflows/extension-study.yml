@@ -1,0 +1,42 @@
+name: Model extension study
+
+# More models, Model Confidence Set, LightGBM sensitivity and feature ablations on fresh prices
+# (scripts/model_extension_study.py). Commits results/extension/.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["scripts/model_extension_study.py", ".github/workflows/extension-study.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  study:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e ".[data]" xgboost
+      - name: Download prices
+        run: python scripts/fetch_data.py --out data/raw
+      - name: Extension study
+        run: python scripts/model_extension_study.py --data-dir data/raw --out results/extension
+      - name: Tables into README
+        run: python scripts/render_extension.py
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results/extension README.md
+          if git diff --cached --quiet; then echo "Nothing changed."; exit 0; fi
+          git commit -m "results: model extension study"
+          for i in 1 2 3; do git pull --rebase && git push && break; sleep 5; done
